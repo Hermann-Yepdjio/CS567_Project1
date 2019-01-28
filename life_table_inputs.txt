@@ -1,0 +1,3 @@
+label	value
+inputMortalityFile	compare.csv
+interest	0.05
