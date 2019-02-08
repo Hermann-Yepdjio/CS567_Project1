@@ -2,4 +2,4 @@ label	value
 inputAges	12
 inputBenefit	1000
 inputNumberClients	10000
-investmentInterest	0.055
+investmentInterest	0.05

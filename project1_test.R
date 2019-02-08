@@ -1,4 +1,4 @@
-#setwd("C:\\Users\\huanglinc\\Desktop\\Project1 Statistics\\3.2R")
+setwd("C:\\Users\\huanglinc\\Desktop\\Project1 Statistics\\github\\CS567_Project1")
 inputsProject1 <- read.delim("project1_inputs.txt", header = TRUE, sep = "\t", dec = ".", stringsAsFactors=FALSE) #read the inputs values from the project1_inputs.txt file
 print (inputsProject1)
 #this file is to run 
@@ -98,49 +98,98 @@ inputNumberClients <- as.numeric(inputsProject1[inputsProject1$label == "inputNu
 
 print("---------Calculating Lifetimes-----------")
 print(paste("Number of clients: ", inputNumberClients))
-for (i in 1:inputNumberClients){ # 10,000 (whole life) incurances with Net Single Premium
-  
-  randomAge <-  sample(lifeTableAges, 1) 
-  randomBenefit <- sample.int(9000, 1, replace=TRUE) + 1000 # picking one randonm integer from range $1000-$1000000 benefit
-  bAge[i] <- randomAge # concatenate
-  bBen[i] <- randomBenefit # concatenate
-  bNps[i] <- BussinessBlock(randomAge,randomBenefit) # calling the function to calculate the net single premium then concatenate
+# for (i in 1:inputNumberClients){ # 10,000 (whole life) incurances with Net Single Premium
+#   
+#   randomAge <- 2
+#   #randomAge <-  sample(lifeTableAges, 1) 
+#   randomBenefit <- 1000 #testing with only 1000 us for all the clients
+#   #randomBenefit <- sample.int(9000, 1, replace=TRUE) + 1000 # picking one randonm integer from range $1000-$1000000 benefit
+#   bAge[i] <- randomAge # concatenate
+#   bBen[i] <- randomBenefit # concatenate
+#   bNps[i] <- BussinessBlock(randomAge,randomBenefit) # calling the function to calculate the net single premium then concatenate
+# 
+#   #--------calculate random dies based on mortality table ----------   this part can be improved in efficiency
+#   #calculate probability of (x) lives t years  t_p_x where x = inputAges
+#   previousAgeP <- lifeTable[ages == (randomAge - 1), c("t_p_x0")]
+#   if (randomAge > 0) {
+#     pLives <- lifeTable[ages >= randomAge, c("t_p_x0")]/previousAgeP
+#   } else {
+#     pLives <- lifeTable[ages >= randomAge, c("t_p_x0")]
+#   }
+#   
+#   pLivesAges <- lifeTable[ages >= randomAge, c("ages")]
+#   pCurveX <- data.frame(pLivesAges, pLives)
+#   
+#   #calculate probability t_1_q_x that x survives t years and dies within 1 year
+#   pCurveXRow <- nrow(pCurveX)
+#   
+#   #probability of dead based on input age
+#   for (j in 1:(pCurveXRow-1)) {
+#     pCurveX$t_1_q_x[j] <- pCurveX$pLives[j] - pCurveX$pLives[j+1] #i = u in the pdf   1 = t in pdf
+#   }
+#   pCurveX$t_1_q_x[pCurveXRow] <- pCurveX$pLives[pCurveXRow] # last line
+#   
+#   
+#   #generate random dies based on input age
+#   randomFinalAge <- sample(pCurveX$pLivesAges, 1, replace = T, pCurveX$t_1_q_x)
+#   bFAge[i] <- randomFinalAge
+#   
+#   #-----this simulation part is for testing, do not delete-----------
+#   #myGraph <- ggplot(pCurveX, aes(pLivesAges, t_1_q_x))
+#   #print(myGraph + geom_point() + geom_point(aes(x=randomFinalAge, y=0.02), color="red"))
+#   #Sys.sleep(2)
+# }
+randomAge <- 1
+bAge <- rep(randomAge, inputNumberClients) # concatenate
+bBen <- rep(100, inputNumberClients) # concatenate
+n <- length(bAge)
+for (k in 1:n){
+  bNps[k] <- BussinessBlock(bAge[k], bBen[k])
+}
+#calculate probability of (x) lives t years  t_p_x where x = inputAges
+previousAgeP <- lifeTable[ages == (randomAge - 1), c("t_p_x0")]
+if (randomAge > 0) {
+  pLives <- lifeTable[ages >= randomAge, c("t_p_x0")]/previousAgeP
+} else {
+  pLives <- lifeTable[ages >= randomAge, c("t_p_x0")]
+}
 
-  #--------calculate random dies based on mortality table ----------   this part can be improved in efficiency
-  #calculate probability of (x) lives t years  t_p_x where x = inputAges
-  previousAgeP <- lifeTable[ages == (randomAge - 1), c("t_p_x0")]
-  if (randomAge > 0) {
-    pLives <- lifeTable[ages >= randomAge, c("t_p_x0")]/previousAgeP
-  } else {
-    pLives <- lifeTable[ages >= randomAge, c("t_p_x0")]
-  }
-  
-  pLivesAges <- lifeTable[ages >= randomAge, c("ages")]
-  pCurveX <- data.frame(pLivesAges, pLives)
-  
+pLivesAges <- lifeTable[ages >= randomAge, c("ages")]
+pCurveX <- data.frame(pLivesAges, pLives)
+
   #calculate probability t_1_q_x that x survives t years and dies within 1 year
   pCurveXRow <- nrow(pCurveX)
-  
+
   #probability of dead based on input age
   for (j in 1:(pCurveXRow-1)) {
     pCurveX$t_1_q_x[j] <- pCurveX$pLives[j] - pCurveX$pLives[j+1] #i = u in the pdf   1 = t in pdf
   }
   pCurveX$t_1_q_x[pCurveXRow] <- pCurveX$pLives[pCurveXRow] # last line
-  
-  
-  #generate random dies based on input age
-  randomFinalAge <- sample(pCurveX$pLivesAges, 1, replace = T, pCurveX$t_1_q_x)
-  bFAge[i] <- randomFinalAge
-  
-  #-----this simulation part is for testing, do not delete-----------
-  #myGraph <- ggplot(pCurveX, aes(pLivesAges, t_1_q_x))
-  #print(myGraph + geom_point() + geom_point(aes(x=randomFinalAge, y=0.02), color="red"))
-  #Sys.sleep(2)
-  
-  
-}
 
 
+#bFAge <- sample(pCurveX$pLivesAges, inputNumberClients, replace = T, pCurveX$t_1_q_x)
+
+#generate perfect pCurve data
+perfectData <- 0
+
+  
+  bIndex <- 1
+  fIndex <- 0
+  for(k in 1:pCurveXRow){
+    nRepeat <- round(pCurveX$t_1_q_x[k]*inputNumberClients)
+    fIndex <- bIndex + nRepeat - 1
+    perfectData[bIndex:fIndex] <- pCurveX$pLivesAges[k]
+    bIndex <- bIndex + nRepeat
+  }  
+nData <- length(perfectData)
+nFill <- inputNumberClients - nData
+#fill values from nData to numberclient
+#perfectData[(nData+1):inputNumberClients] <- sample(pCurveX$pLivesAges, nFill, replace = T, pCurveX$t_1_q_x)
+
+
+perfectData[(nData+1):inputNumberClients] <- perfectData[nData]
+
+bFAge <- perfectData
 
 bDataFrame <- data.frame(Age = bAge, Benefit = bBen, NetSinglePremium = bNps, Die = bFAge) #Creating the final dataframe
 bDataFrame$SurviveYears <- bDataFrame$Die - bDataFrame$Age
@@ -215,13 +264,13 @@ ggsave(filename = "images/Random Net Single Premium Histogram.png", plot = myGra
 
 x11()
 myGraph <- ggplot(bDataFrame, aes(Die))
-myGraph <- myGraph + geom_histogram() + labs(title = "Random Dead Ages Histogram")
+myGraph <- myGraph + geom_histogram(binwidth=1, colour="black", fill="white") + labs(title = "Random Dead Ages Histogram")
 print(myGraph)
 ggsave(filename = "images/Random Dead Ages Histogram.png", plot = myGraph)
 
 x11()
 myGraph <- ggplot(bDataFrame, aes(SurviveYears))
-myGraph <- myGraph + geom_histogram() + labs(title = "Random Survive Years Histogram")
+myGraph <- myGraph + geom_histogram(binwidth=1, colour="black", fill="white") + labs(title = "Random Survive Years Histogram")
 print(myGraph)
 ggsave(filename = "images/Random Survive Years Histogram.png", plot = myGraph)
 
