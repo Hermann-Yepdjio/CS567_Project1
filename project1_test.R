@@ -30,47 +30,52 @@ print(paste("Whole Life Net Single Premium: ", nsp))
 
 
 #-------------------Calculating Probability of Dead Curve--------------
-
-#calculate probability of (x) lives t years  t_p_x where x = inputAges
-previousAgeP <- lifeTable[ages == (inputAges - 1), c("t_p_x0")]
-if (inputAges > 0) {
-  pLives <- lifeTable[ages >= inputAges, c("t_p_x0")]/previousAgeP
-} else {
-  pLives <- lifeTable[ages >= inputAges, c("t_p_x0")]
+CalculateFinalAge <- function(inputAge) { 
+  
+  #calculate probability of (x) lives t years  t_p_x where x = inputAges
+  previousAgeP <- lifeTable[ages == (inputAges - 1), c("t_p_x0")]
+  if (inputAges > 0) {
+    pLives <- lifeTable[ages >= inputAges, c("t_p_x0")]/previousAgeP
+  } else {
+    pLives <- lifeTable[ages >= inputAges, c("t_p_x0")]
+  }
+  
+  pLivesAges <- lifeTable[ages >= inputAges, c("ages")]
+  pCurveX <- data.frame(pLivesAges, pLives)
+  
+  #calculate probability t_1_q_x that x survives t years and dies within 1 year
+  pCurveXRow <- nrow(pCurveX)
+  
+  #probability of dead based on input age
+  for (i in 1:(pCurveXRow-1)) {
+    pCurveX$t_1_q_x[i] <- pCurveX$pLives[i] - pCurveX$pLives[i+1] #i = u in the pdf   1 = t in pdf
+  }
+  pCurveX$t_1_q_x[pCurveXRow] <- pCurveX$pLives[pCurveXRow] # last line
+  #print(sum(pCurveX$t_1_q_x))
+  
+  #plot lives probability based on input age
+  myGraph <- ggplot(pCurveX, aes(pLivesAges, pLives))
+  myGraph + geom_point()
+  ggsave(filename = "images/lives probability based on input age.png", plot = myGraph)
+  
+  x11()
+  #plot t_1_q_x based on input age
+  myGraph <- ggplot(pCurveX, aes(pLivesAges, t_1_q_x))
+  myGraph <- myGraph + geom_point() + labs(title = "probability of (x) survive t years and die next year")
+  print(myGraph)
+  ggsave(filename = "images/probability of (X) survive t years and die next year.png", plot = myGraph)
+  #----------------------------------------------
+  
+  #generate random dies based on input age
+  s <- sample(pCurveX$pLivesAges, 1000, replace = T, pCurveX$t_1_q_x)
+  
+  return (s)
+  #ttt <- data.frame(s)
+  #myGraph <- ggplot(ttt, aes(s))
+  #myGraph + geom_histogram()
 }
 
-pLivesAges <- lifeTable[ages >= inputAges, c("ages")]
-pCurveX <- data.frame(pLivesAges, pLives)
 
-#calculate probability t_1_q_x that x survives t years and dies within 1 year
-pCurveXRow <- nrow(pCurveX)
-
-#probability of dead based on input age
-for (i in 1:(pCurveXRow-1)) {
-  pCurveX$t_1_q_x[i] <- pCurveX$pLives[i] - pCurveX$pLives[i+1] #i = u in the pdf   1 = t in pdf
-}
-pCurveX$t_1_q_x[pCurveXRow] <- pCurveX$pLives[pCurveXRow] # last line
-#print(sum(pCurveX$t_1_q_x))
-
-#generate random dies based on input age
-#s <- sample(pCurveX$pLivesAges, 1000, replace = T, pCurveX$t_1_q_x)
-#ttt <- data.frame(s)
-#myGraph <- ggplot(ttt, aes(s))
-#myGraph + geom_histogram()
-
-
-#plot lives probability based on input age
-myGraph <- ggplot(pCurveX, aes(pLivesAges, pLives))
-myGraph + geom_point()
-ggsave(filename = "images/lives probability based on input age.png", plot = myGraph)
-
-x11()
-#plot t_1_q_x based on input age
-myGraph <- ggplot(pCurveX, aes(pLivesAges, t_1_q_x))
-myGraph <- myGraph + geom_point() + labs(title = "probability of (x) survive t years and die next year")
-print(myGraph)
-ggsave(filename = "images/probability of (X) survive t years and die next year.png", plot = myGraph)
-#----------------------------------------------
 
 
 
@@ -139,7 +144,7 @@ print(paste("Number of clients: ", inputNumberClients))
 #   #print(myGraph + geom_point() + geom_point(aes(x=randomFinalAge, y=0.02), color="red"))
 #   #Sys.sleep(2)
 # }
-randomAge <- 1
+randomAge <- 0
 bAge <- rep(randomAge, inputNumberClients) # concatenate
 bBen <- rep(100, inputNumberClients) # concatenate
 n <- length(bAge)
@@ -149,10 +154,7 @@ for (k in 1:n){
 
 
 
-
-
-
-calculateFinalAge <- function(inputAge) { 
+CalculateFinalAgePerfectData <- function(inputAge) { 
   
   #calculate probability of (x) lives t years  t_p_x where x = inputAges
   previousAgeP <- lifeTable[ages == (inputAge - 1), c("t_p_x0")]
@@ -169,20 +171,37 @@ calculateFinalAge <- function(inputAge) {
   pCurveXRow <- nrow(pCurveX)
   
   #probability of dead based on input age
-  for (j in 1:(pCurveXRow-1)) {
-    pCurveX$t_1_q_x[j] <- pCurveX$pLives[j] - pCurveX$pLives[j+1] #i = u in the pdf   1 = t in pdf
+  pCurveX$t_1_q_x[1] <- 1 - pCurveX$pLives[1] # firt data important,,, to avoid bug
+  for (j in 2:(pCurveXRow)) {
+    
+    #small bug which does not consider the 0|1_q_x data..... also add q_x of 1 in the last year automatically? 
+    pCurveX$t_1_q_x[j] <- pCurveX$pLives[j-1] - pCurveX$pLives[j]
+    #pCurveX$t_1_q_x[j] <- pCurveX$pLives[j] - pCurveX$pLives[j+1] #i = u in the pdf   1 = t in pdf
   }
-  pCurveX$t_1_q_x[pCurveXRow] <- pCurveX$pLives[pCurveXRow] # last line
+  #pCurveX$t_1_q_x[pCurveXRow] <- pCurveX$pLives[pCurveXRow] # last line
   
   #bFAge <- sample(pCurveX$pLivesAges, inputNumberClients, replace = T, pCurveX$t_1_q_x)
   
   #------generate perfect pCurve data
-  perfectData <- 0
+  perfectData <- 1
   
   bIndex <- 1
   fIndex <- 0
+  counter <- 0
   for(k in 1:pCurveXRow){
-    nRepeat <- round(pCurveX$t_1_q_x[k]*inputNumberClients)
+
+    nRepeat <- pCurveX$t_1_q_x[k]*inputNumberClients
+    if(nRepeat%%1 >= 0.5){ # use this to avoid number of data > pCurveXRow
+      if(counter%%2 == 0){
+        nRepeat <- round(nRepeat)
+      }else{
+        nRepeat <- trunc(nRepeat) # use trunc to avoid number of data > pCurveXRow
+      }
+      counter <- counter +1
+    }else{
+      nRepeat <- trunc(nRepeat)
+    }
+    
     fIndex <- bIndex + nRepeat - 1
     perfectData[bIndex:fIndex] <- pCurveX$pLivesAges[k]
     bIndex <- bIndex + nRepeat
@@ -199,7 +218,7 @@ calculateFinalAge <- function(inputAge) {
 
 
 
-bFAge <- calculateFinalAge(randomAge)
+bFAge <- CalculateFinalAgePerfectData(randomAge)
 
 bDataFrame <- data.frame(Age = bAge, Benefit = bBen, NetSinglePremium = bNps, Die = bFAge) #Creating the final dataframe
 bDataFrame$SurviveYears <- bDataFrame$Die - bDataFrame$Age
@@ -213,7 +232,7 @@ paymentTable <- aggregate(. ~SurviveYears, data=paymentTable, sum, na.rm = TRUE)
 
 investmentInterest <- as.numeric(inputsProject1[inputsProject1$label == "investmentInterest", c("value")])
 
-year <- 0
+surviveYears <- 0
 money <- sum(bDataFrame$NetSinglePremium)
 earnInterest <- money*investmentInterest
 
@@ -229,7 +248,7 @@ if(length(payment) == 0){ #sometime there is no payment for specific year, so co
 nYears <- max(paymentTable$SurviveYears)
 
 for (i in 1:nYears) {
-  year[i+1] <- i
+  surviveYears[i+1] <- i
 
   money[i+1] <- money[i] + earnInterest[i] - benefitPayment[i]
   
@@ -249,7 +268,7 @@ for (i in 1:nYears) {
   
 }
 #benefitPayment[i+1] <- 0 #last year payment = 0
-profitTable <- data.frame(year, money, earnInterest, benefitPayment)
+profitTable <- data.frame(surviveYears, money, earnInterest, benefitPayment)
 
 # -------------- print business data frame -------------------------------
 x11()
@@ -284,9 +303,9 @@ ggsave(filename = "images/Random Survive Years Histogram.png", plot = myGraph)
 
 
 #------------------- print profit graph -------------------------------------
-meltProfitTable <- melt(profitTable, id="year")
+meltProfitTable <- melt(profitTable, id="surviveYears")
 x11()
-myGraph <- ggplot(meltProfitTable, aes(x = year, y = value, colour = variable))
+myGraph <- ggplot(meltProfitTable, aes(x = surviveYears, y = value, colour = variable))
 myGraph <- myGraph + geom_point() + labs(title="Company Profit Graph", y = "Money [$US]") + 
   scale_color_manual(labels = c("Profit", "Interest", "Payment"), values = c("Green","blue", "red")) 
 print(myGraph)

@@ -12,6 +12,12 @@ beginRowData = 1
 ages = as.numeric(data[beginRowData:dataTotalRow, 1])
 mortality = as.numeric(data[beginRowData:dataTotalRow, 2])
 
+#-------add a new row at the end with mortality of 1 --- to avoid bug
+if (mortality[dataTotalRow] != 1) {
+  ages[(dataTotalRow+1)] <- ages[dataTotalRow]+1
+  mortality[(dataTotalRow+1)] <- 1
+}
+
 lifeTable <- data.frame(ages,mortality)
 
 lifeTableTotalRow = nrow(lifeTable)
