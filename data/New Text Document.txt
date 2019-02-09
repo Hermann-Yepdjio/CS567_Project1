@@ -1,0 +1,28 @@
+Hello All,
+
+Please find the general description of your first CS567 project below. As i mentioned, you will be divided into 2 groups, and will work on different sub-topics within the main project. The first project meeting will be on Tuesday 2PM in the Graduate Lab, where Dr. Chueh will come and explain the project.
+
+Best, 
+Dr. Davendra 
+
+--------------------------------------------------
+ 
+CS 567 Projects:
+ 
+Insurance and annuity products are intangible goods which promise future benefits in the form of a large lump sum (e.g. death benefit) or a steady stream of cashflows (e.g. retirement or disability income)
+when some condition holds/triggers (e.g. die, live, retire, etc).
+ 
+These two projects using R programming are designed to generate analytical report for insurer, as well as for consumer who shop for these policies.
+ 
+The steps can be outlined as follows:
+ 
+1.       Select a proper mortality table to price a variety of insurance products.  (from the weblink below)
+2.       Select a proper mortality table to price a variety of annuity products.
+3.       Create an insurance business block made of 10,000 (adjustable) insurance policies (as priced in 1.) and conduct statistical analysis of the surplus/loss for the business.
+4.       Create an annuity business block made of 10,000 (adjustable) annuity contracts (as priced in 2.) and conduct statistical analysis of the surplus/loss for the annuity business. 
+ 
+Our meeting will go over the formula to price insurance and annuity policies. Then random simulations of 10,000 independent lifetimes can be made in R and the resulting surplus/loss may be calculated.
+The analytical report will provide “what if” information for the company executives or actuaries. Past work in Excel may be available to validate your calculations, however, the mortality table may be
+Different than the one you choose.
+ 
+https://mort.soa.org/?_ga=2.155909691.1059898131.1547157104-186254515.1517263599
