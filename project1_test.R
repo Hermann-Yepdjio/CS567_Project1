@@ -1,4 +1,4 @@
-setwd("C:\\Users\\huanglinc\\Desktop\\Project1 Statistics\\github\\CS567_Project1")
+setwd("C:/Users/chao_/Desktop/CWU/Courses/Q1 Winter 2019/CS567 Computational Statistics R/Project1/Project1 Github/CS567_Project1")
 inputsProject1 <- read.delim("project1_inputs.txt", header = TRUE, sep = "\t", dec = ".", stringsAsFactors=FALSE) #read the inputs values from the project1_inputs.txt file
 print (inputsProject1)
 #this file is to run 
@@ -146,32 +146,38 @@ n <- length(bAge)
 for (k in 1:n){
   bNps[k] <- BussinessBlock(bAge[k], bBen[k])
 }
-#calculate probability of (x) lives t years  t_p_x where x = inputAges
-previousAgeP <- lifeTable[ages == (randomAge - 1), c("t_p_x0")]
-if (randomAge > 0) {
-  pLives <- lifeTable[ages >= randomAge, c("t_p_x0")]/previousAgeP
-} else {
-  pLives <- lifeTable[ages >= randomAge, c("t_p_x0")]
-}
 
-pLivesAges <- lifeTable[ages >= randomAge, c("ages")]
-pCurveX <- data.frame(pLivesAges, pLives)
 
+
+
+
+
+calculateFinalAge <- function(inputAge) { 
+  
+  #calculate probability of (x) lives t years  t_p_x where x = inputAges
+  previousAgeP <- lifeTable[ages == (inputAge - 1), c("t_p_x0")]
+  if (inputAge > 0) {
+    pLives <- lifeTable[ages >= inputAge, c("t_p_x0")]/previousAgeP
+  } else {
+    pLives <- lifeTable[ages >= inputAge, c("t_p_x0")]
+  }
+  
+  pLivesAges <- lifeTable[ages >= inputAge, c("ages")]
+  pCurveX <- data.frame(pLivesAges, pLives)
+  
   #calculate probability t_1_q_x that x survives t years and dies within 1 year
   pCurveXRow <- nrow(pCurveX)
-
+  
   #probability of dead based on input age
   for (j in 1:(pCurveXRow-1)) {
     pCurveX$t_1_q_x[j] <- pCurveX$pLives[j] - pCurveX$pLives[j+1] #i = u in the pdf   1 = t in pdf
   }
   pCurveX$t_1_q_x[pCurveXRow] <- pCurveX$pLives[pCurveXRow] # last line
-
-
-#bFAge <- sample(pCurveX$pLivesAges, inputNumberClients, replace = T, pCurveX$t_1_q_x)
-
-#generate perfect pCurve data
-perfectData <- 0
-
+  
+  #bFAge <- sample(pCurveX$pLivesAges, inputNumberClients, replace = T, pCurveX$t_1_q_x)
+  
+  #------generate perfect pCurve data
+  perfectData <- 0
   
   bIndex <- 1
   fIndex <- 0
@@ -181,15 +187,19 @@ perfectData <- 0
     perfectData[bIndex:fIndex] <- pCurveX$pLivesAges[k]
     bIndex <- bIndex + nRepeat
   }  
-nData <- length(perfectData)
-nFill <- inputNumberClients - nData
-#fill values from nData to numberclient
-#perfectData[(nData+1):inputNumberClients] <- sample(pCurveX$pLivesAges, nFill, replace = T, pCurveX$t_1_q_x)
+  nData <- length(perfectData)
+  nFill <- inputNumberClients - nData
+  
+  #fill residual round values from nData to numberclient 
+  perfectData[(nData+1):inputNumberClients] <- sample(pCurveX$pLivesAges, nFill, replace = T, pCurveX$t_1_q_x)
+  #perfectData[(nData+1):inputNumberClients] <- perfectData[nData]
+  
+  return(perfectData)
+}
 
 
-perfectData[(nData+1):inputNumberClients] <- perfectData[nData]
 
-bFAge <- perfectData
+bFAge <- calculateFinalAge(randomAge)
 
 bDataFrame <- data.frame(Age = bAge, Benefit = bBen, NetSinglePremium = bNps, Die = bFAge) #Creating the final dataframe
 bDataFrame$SurviveYears <- bDataFrame$Die - bDataFrame$Age
@@ -203,19 +213,17 @@ paymentTable <- aggregate(. ~SurviveYears, data=paymentTable, sum, na.rm = TRUE)
 
 investmentInterest <- as.numeric(inputsProject1[inputsProject1$label == "investmentInterest", c("value")])
 
-
 year <- 0
 money <- sum(bDataFrame$NetSinglePremium)
 earnInterest <- money*investmentInterest
 
-paymentRec <- 0
-
+benefitPayment <- 0
 #find payment of the year
 payment <- paymentTable[paymentTable$SurviveYears == 0, c("Benefit")] 
 if(length(payment) == 0){ #sometime there is no payment for specific year, so convert numeric(0) to 0
-  paymentRec <- 0
+  benefitPayment <- 0
 }else{
-  paymentRec <- payment
+  benefitPayment <- payment
 }
 
 nYears <- max(paymentTable$SurviveYears)
@@ -223,7 +231,7 @@ nYears <- max(paymentTable$SurviveYears)
 for (i in 1:nYears) {
   year[i+1] <- i
 
-  money[i+1] <- money[i] + earnInterest[i] - paymentRec[i]
+  money[i+1] <- money[i] + earnInterest[i] - benefitPayment[i]
   
   if(money[i+1] > 0){ #only calculate earnInterest when money > 0
     earnInterest[i+1] <- money[i+1]*investmentInterest
@@ -234,14 +242,14 @@ for (i in 1:nYears) {
   #find payment of next year
   payment <- paymentTable[paymentTable$SurviveYears == i, c("Benefit")] 
   if(length(payment) == 0){ #sometime there is no payment for specific year, so convert numeric(0) to 0
-    paymentRec[i+1] <- 0
+    benefitPayment[i+1] <- 0
   }else{
-    paymentRec[i+1] <- payment
+    benefitPayment[i+1] <- payment
   }
   
 }
-#paymentRec[i+1] <- 0 #last year payment = 0
-profitTable <- data.frame(year, money, earnInterest, paymentRec)
+#benefitPayment[i+1] <- 0 #last year payment = 0
+profitTable <- data.frame(year, money, earnInterest, benefitPayment)
 
 # -------------- print business data frame -------------------------------
 x11()
@@ -284,13 +292,13 @@ myGraph <- myGraph + geom_point() + labs(title="Company Profit Graph", y = "Mone
 print(myGraph)
 ggsave(filename = "images/Company Profit Graph.png", plot = myGraph)
 #myGraph  <- ggplot() + geom_point(data=profitTable, aes(x=year, y=money), color = "black") +
-#  geom_point(data=profitTable, aes(x=year, y=paymentRec), color = "red") +
+#  geom_point(data=profitTable, aes(x=year, y=benefitPayment), color = "red") +
 #  geom_point(data=profitTable, aes(x=year, y=earnInterest), color = "blue") +
 #  labs(title="Profit Graph")
 #print(myGraph)
 
 
-#print(sum(profitTable$paymentRec))
+#print(sum(profitTable$benefitPayment))
 #print(sum(bDataFrame$Benefit))
 #print(sum(paymentTable$Benefit))
 #---------------------------------
