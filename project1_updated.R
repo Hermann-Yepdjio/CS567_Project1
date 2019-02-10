@@ -207,7 +207,7 @@ BussinessBlock <- function(rAge,rBenefit) {
 inputNumberClients <- as.numeric(inputsProject1[inputsProject1$label == "inputNumberClients", c("value")])
 bAge <- vector(mode="integer", length=inputNumberClients) #initialize variables
 bBen <- vector(mode="integer", length=inputNumberClients)
-bNps <- vector(mode="integer", length=inputNumberClients)
+bNps <- vector(mode="numeric", length=inputNumberClients)
 bFAge <- vector(mode="integer", length=inputNumberClients)
 maxAges <- max(lifeTable$ages)
 lifeTableAges <- lifeTable$ages[ages < maxAges]# avoid picking max ages

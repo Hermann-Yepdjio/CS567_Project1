@@ -40,8 +40,10 @@ void for_loop(double *table, int* dim, int* bAge, int* bBen, double* bNps, int* 
   for(i = 0; i < *inputNumberClients; i++)
   {
  	    int randomAge = lifeTableAges[rand()%dim[2]];  
+ 	    //int randomAge = 0; 
       int randomBenefit = rand()%(10000 + 1 - 1000) + 1000;  //randomly pick a number between 1000 and 10000
-		
+      //int randomBenefit = 100;
+      
 	bAge[i] = randomAge;
 	bBen[i] = randomBenefit;
 
