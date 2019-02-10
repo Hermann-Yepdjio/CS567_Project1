@@ -219,25 +219,72 @@ lifeTableAges <- data.frame(Age=ages) # creating a data frame that contains the 
 
 print("---------Calculating Lifetimes-----------")
 print(paste("Number of clients: ", inputNumberClients))
+
+#pNormal <- dnorm(lifeTableAges$Age,35,10) # create a normal distribution mean = 35 years standard deviation = 10
+
+
+
+
 for (i in 1:inputNumberClients){ # 10,000 (whole life) incurances with Net Single Premium
-
-
+  
+  #randomAge <-  sample(lifeTableAges$Age, 1, replace = T, prob = pNormal) # there was a bug before lifeTableAges instead of lifeTableAges$Age
   randomAge <-  sample(lifeTableAges$Age, 1, replace = T) # there was a bug before lifeTableAges instead of lifeTableAges$Age
   randomBenefit <- sample.int(9000, 1, replace=TRUE) + 1000 # picking one randonm integer from range $1000-$1000000 benefit
   bAge[i] <- randomAge # concatenate
   bBen[i] <- randomBenefit # concatenate
   bNps[i] <- BussinessBlock(randomAge,randomBenefit) # calling the function to calculate the net single premium then concatenate
-
+  
   #--------calculate random dies based on mortality table ----------   this part can be improved in efficiency
-
-  bFAge[i] <- CalculateFinalAge(randomAge)
-
+  
+  
+  
+  #-------------------bug fixed---------------
+  
+  #calculate probability of (x) lives t years  t_p_x where x = randomAges
+  previousAgeP <- lifeTable[ages == (randomAge - 1), c("t_p_x0")]
+  if (randomAge > 0) {
+    pLives <- lifeTable[ages >= randomAge, c("t_p_x0")]/previousAgeP
+  } else {
+    pLives <- lifeTable[ages >= randomAge, c("t_p_x0")]
+  }
+  
+  pLivesAges <- lifeTable[ages >= randomAge, c("ages")]
+  pCurveX <- data.frame(pLivesAges, pLives)
+  
+  #calculate probability tl1_q_x that x survives t years and dies within 1 year
+  pCurveXRow <- nrow(pCurveX)
+  
+  #probability of dead based on input age
+  pCurveX$tl1_q_x[1] <- 1 - pCurveX$pLives[1] # firt data important,,, to avoid bug
+  if(pCurveXRow > 1) { #bug -fixed,  avoid enter for when nrow(pCurveX) == 0, this occur when randomAge is the last value of the tablelife 
+    for (j in 2:(pCurveXRow)) {
+      
+      #small bug which does not consider the 0|1_q_x data..... also add q_x of 1 in the last year automatically? 
+      pCurveX$tl1_q_x[j] <- pCurveX$pLives[j-1] - pCurveX$pLives[j]
+      #pCurveX$tl1_q_x[j] <- pCurveX$pLives[j] - pCurveX$pLives[j+1] #i = u in the pdf   1 = t in pdf
+    }
+  }
+  #----------------------------------
+  
+  #generate random dies based on input age
+  finalAge <- 0
+  if(pCurveXRow > 1) { #bug -fixed,  avoid enter when nrow(pCurveX) == 0, this occur when randomAge is the last value of the tablelife
+    finalAge <- sample(pCurveX$pLivesAges, 1, replace = T, pCurveX$tl1_q_x)
+  }else
+  {
+    finalAge <- pCurveX$pLivesAges[1] # only has 1 probability
+  }
+  
+  bFAge[i] <- finalAge
+  
+  
+  
+  
   #-----this simulation part is for testing, do not delete-----------
   #myGraph <- ggplot(pCurveX, aes(pLivesAges, tl1_q_x))
   #print(myGraph + geom_point() + geom_point(aes(x=randomFinalAge, y=0.02), color="red"))
   #Sys.sleep(2)
 }
-
 
 
 
@@ -304,19 +351,19 @@ profitTable <- data.frame(surviveYears, money, earnInterest, benefitPayment)
 # -------------- print business data frame -------------------------------
 x11()
 myGraph <- ggplot(bDataFrame, aes(Age))
-myGraph <- myGraph + geom_histogram() + labs(title = "Random Ages Histogram")
+myGraph <- myGraph + geom_histogram(binwidth=1, colour="black", fill="white") + labs(title = "Random Ages Histogram")
 print(myGraph)
 ggsave(filename = "images/Random Ages Histogram.png", plot = myGraph)
 
 x11()
 myGraph <- ggplot(bDataFrame, aes(Benefit))
-myGraph <- myGraph + geom_histogram() + labs(title = "Random Benefit Histogram")
+myGraph <- myGraph + geom_histogram(colour="black", fill="white") + labs(title = "Random Benefit Histogram")
 print(myGraph)
 ggsave(filename = "images/Random Benefit Histogram.png", plot = myGraph)
 
 x11()
 myGraph <- ggplot(bDataFrame, aes(NetSinglePremium))
-myGraph <- myGraph + geom_histogram() + labs(title = "Random Net Single Premium Histogram")
+myGraph <- myGraph + geom_histogram(colour="black", fill="white") + labs(title = "Random Net Single Premium Histogram")
 print(myGraph)
 ggsave(filename = "images/Random Net Single Premium Histogram.png", plot = myGraph)
 
