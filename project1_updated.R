@@ -204,15 +204,15 @@ BussinessBlock <- function(rAge,rBenefit) {
   netSinglePremium <- lifeTable[lifeTable$ages == rAge, c("A_x")]*rBenefit
   return(netSinglePremium)
 }
-
-bAge <- 0
-bBen <- 0
-bNps <- 0
-bFAge <- 0
+inputNumberClients <- as.numeric(inputsProject1[inputsProject1$label == "inputNumberClients", c("value")])
+bAge <- vector(mode="integer", length=inputNumberClients) #initialize variables
+bBen <- vector(mode="integer", length=inputNumberClients)
+bNps <- vector(mode="integer", length=inputNumberClients)
+bFAge <- vector(mode="integer", length=inputNumberClients)
 maxAges <- max(lifeTable$ages)
 lifeTableAges <- lifeTable$ages[ages < maxAges]# avoid picking max ages
 
-inputNumberClients <- as.numeric(inputsProject1[inputsProject1$label == "inputNumberClients", c("value")])
+
 
 #---------------------- looping 10000 -------------------------------------
 lifeTableAges <- data.frame(Age=ages) # creating a data frame that contains the ages
@@ -310,20 +310,25 @@ paymentTable <- aggregate(. ~SurviveYears, data=paymentTable, sum, na.rm = TRUE)
 
 investmentInterest <- as.numeric(inputsProject1[inputsProject1$label == "investmentInterest", c("value")])
 
-surviveYears <- 0
-money <- sum(bDataFrame$NetSinglePremium)
-earnInterest <- money*investmentInterest
+nYears <- max(paymentTable$SurviveYears)
 
-benefitPayment <- 0
-#find payment of the year
+money <- sum(bDataFrame$NetSinglePremium)
+earnInterest <- vector(mode="numeric", length=(nYears+1))
+earnInterest[1] <- money*investmentInterest
+
+
+
+benefitPayment <- vector(mode="integer", length=(nYears+1))
+#find payment of the year 0
 payment <- paymentTable[paymentTable$SurviveYears == 0, c("Benefit")] 
 if(length(payment) == 0){ #sometime there is no payment for specific year, so convert numeric(0) to 0
-  benefitPayment <- 0
+  benefitPayment[1] <- 0
 }else{
-  benefitPayment <- payment
+  benefitPayment[1] <- payment
 }
 
-nYears <- max(paymentTable$SurviveYears)
+surviveYears <- vector(mode="integer", length=(nYears+1))
+surviveYears[1] <- 0
 
 for (i in 1:nYears) {
   surviveYears[i+1] <- i
