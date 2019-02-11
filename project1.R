@@ -26,7 +26,7 @@ nsp <- lifeTable[lifeTable$ages == inputAges, c("A_x")]*inputBenefit
 print(paste("input Ages: ", inputAges))
 print(paste("Whole Life Net Single Premium: ", nsp))
 
-
+# another comment
 
 
 #-------------------Calculating Probability of Dead Curve--------------
