@@ -1,5 +1,5 @@
 #setwd("/media/hermann/Tonpi/tonpi/Collegecourses/CWU/Graduate School/Winter 2019/CS 567/Projects/Project1/3R")
-setwd("C:/Users/huanglinc/Desktop/Project1 Statistics/github/CS567_Project1")
+setwd("C:\\Users\\Lubna\\Desktop\\CWU\\Winter2019\\Stat\\ProjectOneTwo\\CS567_Project1")
 inputsProject1 <- read.delim("project1_inputs.txt", header = TRUE, sep = "\t", dec = ".", stringsAsFactors=FALSE) #read the inputs values from the project1_inputs.txt file
 print (inputsProject1)
 #this file is to run 
@@ -16,7 +16,7 @@ library(reshape)
 x11()
 
 myGraph <- ggplot(lifeTable, aes(ages, A_x))
-myGraph <- myGraph + geom_point()
+myGraph <- myGraph + geom_point() + labs(title = "Ages Vs Ax") + theme(plot.title = element_text(hjust = 0.5)) + xlab("Age") + ylab("Ax")
 print(myGraph)
 ggsave(filename = "images/A_x Vs Ages.png", plot = myGraph)
 
@@ -375,30 +375,36 @@ profitTable <- data.frame(surviveYears, money, earnInterest, benefitPayment)
 x11()
 myGraph <- ggplot(bDataFrame, aes(Age))
 myGraph <- myGraph + geom_histogram(binwidth=1, colour="black", fill="white") + labs(title = "Random Ages Histogram")
+myGraph <- myGraph +theme(plot.title = element_text(hjust = 0.5))
 print(myGraph)
 ggsave(filename = "images/Random Ages Histogram.png", plot = myGraph)
 
 x11()
 myGraph <- ggplot(bDataFrame, aes(Benefit))
 myGraph <- myGraph + geom_histogram(colour="black", fill="white") + labs(title = "Random Benefit Histogram")
+myGraph <- myGraph +theme(plot.title = element_text(hjust = 0.5))
 print(myGraph)
 ggsave(filename = "images/Random Benefit Histogram.png", plot = myGraph)
 
 x11()
 myGraph <- ggplot(bDataFrame, aes(NetSinglePremium))
-myGraph <- myGraph + geom_histogram(colour="black", fill="white") + labs(title = "Random Net Single Premium Histogram")
+myGraph <- myGraph + geom_histogram(colour="black", fill="white") + labs(title = "Random Net Single Premium Histogram") 
+myGraph <- myGraph +theme(plot.title = element_text(hjust = 0.5))
 print(myGraph)
 ggsave(filename = "images/Random Net Single Premium Histogram.png", plot = myGraph)
 
 x11()
 myGraph <- ggplot(bDataFrame, aes(Die))
-myGraph <- myGraph + geom_histogram(binwidth=1, colour="black", fill="white") + labs(title = "Random Dead Ages Histogram")
+myGraph <- myGraph + geom_histogram(binwidth=1, colour="black", fill="white") + labs(title = "Random Death Ages Histogram") + xlab("Death Age")
+myGraph <- myGraph +theme(plot.title = element_text(hjust = 0.5))
+
 print(myGraph)
 ggsave(filename = "images/Random Dead Ages Histogram.png", plot = myGraph)
 
 x11()
 myGraph <- ggplot(bDataFrame, aes(SurviveYears))
 myGraph <- myGraph + geom_histogram(binwidth=1, colour="black", fill="white") + labs(title = "Random Survive Years Histogram")
+myGraph <- myGraph +theme(plot.title = element_text(hjust = 0.5))
 print(myGraph)
 ggsave(filename = "images/Random Survive Years Histogram.png", plot = myGraph)
 
@@ -409,6 +415,7 @@ x11()
 myGraph <- ggplot(meltProfitTable, aes(x = surviveYears, y = value, colour = variable))
 myGraph <- myGraph + geom_point() + labs(title="Company Profit Graph", y = "Money [$US]") + geom_line(linetype = "dashed") +
   scale_color_manual(labels = c("Profit", "Interest", "Payment"), values = c("Green","blue", "red")) 
+myGraph <- myGraph +theme(plot.title = element_text(hjust = 0.5))
 print(myGraph)
 
 ggsave(filename = "images/Company Profit Graph.png", plot = myGraph)
