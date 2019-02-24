@@ -1,5 +1,6 @@
 #setwd("/media/hermann/Tonpi/tonpi/Collegecourses/CWU/Graduate School/Winter 2019/CS 567/Projects/Project1/3R")
-setwd("C:\\Users\\Lubna\\Desktop\\CWU\\Winter2019\\Stat\\ProjectOneTwo\\CS567_Project1")
+#setwd("C:\\Users\\Lubna\\Desktop\\CWU\\Winter2019\\Stat\\ProjectOneTwo\\CS567_Project1")
+setwd("C:/Users/chao_/Desktop/CWU/Courses/Q1 Winter 2019/CS567 Computational Statistics R/Project2/CS567_Project1")
 inputsProject1 <- read.delim("project1_inputs.txt", header = TRUE, sep = "\t", dec = ".", stringsAsFactors=FALSE) #read the inputs values from the project1_inputs.txt file
 print (inputsProject1)
 #this file is to run 
@@ -327,13 +328,11 @@ write.table(bDataFrame, file="BusinessData.csv", row.names=F, col.names=T, appen
 
 
 paymentTable <- bDataFrame[c("SurviveYears", "Benefit")]
-paymentTable <- aggregate(. ~SurviveYears, data=paymentTable, sum, na.rm = TRUE)
-
+paymentTable <- aggregate(. ~SurviveYears, data=paymentTable, sum, na.rm = TRUE) #group sum, this part can be improve creating own code for grouping and put 0 in the year without payment
 investmentInterest <- as.numeric(inputsProject1[inputsProject1$label == "investmentInterest", c("value")])
-
 nYears <- max(paymentTable$SurviveYears)
-
 money <- sum(bDataFrame$NetSinglePremium)
+
 earnInterest <- vector(mode="numeric", length=(nYears+1))
 earnInterest[1] <- money*investmentInterest
 
@@ -376,46 +375,63 @@ profitTable <- data.frame(surviveYears, money, earnInterest, benefitPayment)
 
 ########## Project 2 ################
 # F(t)= Premium (t)+ accumlatedMonthlyinterest(t)- benefit(t)
-tTimes <- max(paymentTable$SurviveYears) +1
-premiumValues<- bDataFrame$NetSinglePremium
+tTimes <- length(profitTable$surviveYears)
+#fundValues <- sum(bDataFrame$NetSinglePremium) #first fundvalue
 # calucalting the monthy interest by A=p*((1+(annual interest/12))^(12*i)) - from the web
 # calucalting the monthy interest by 1+((i)^12)/12  -given in the class 
-monthlyInterest<-c(0)
-for (i in 1:tTimes) {
-monthlyInterest[i]<-((1+((earnInterest[i])/12)))
+
+#initialized array
+fundValues <- vector(mode="numeric", length=tTimes)
+interestMonthBased <- vector(mode="numeric", length=tTimes)
+accInterMonthBased <- vector(mode="numeric", length=tTimes)
+accBenPay <- vector(mode="numeric", length=tTimes)
+#data for year 0
+year <- profitTable$surviveYears
+fundValues[1] <- profitTable$money[1]
+interestMonthBased[1] <- fundValues[1] * (1+investmentInterest/12)^12 - fundValues[1] # only calculate the interest
+benefitPay <- profitTable$benefitPayment
+accInterMonthBased[1] <- interestMonthBased[1] 
+accBenPay[1]<- benefitPay[1]
+
+for (i in 1:(tTimes-1)) {
+  
+  fundValues[i+1] <- fundValues[i] + interestMonthBased[i] - benefitPay[i]
+  
+  if(fundValues[i+1] > 0){ #only calculate Interest when fund > 0
+    interestMonthBased[i+1] <- fundValues[i+1] * (1+investmentInterest/12)^12 - fundValues[i+1] 
+  }else {
+    interestMonthBased[i+1] <- 0
+  }
+  accInterMonthBased[i+1] <- accInterMonthBased[i] +  interestMonthBased[i+1]
+  accBenPay[i+1] <- accBenPay[i] +  benefitPay[i+1]
+  
 }
 # Now, claulating the Fund value, F(t)= Premium (t)+ accumlatedMonthlyinterest(t)- benefit(t)
-fundValues<-c(0)
-for (j in 1:tTimes) {
-  accPrem<-sum(as.numeric(premiumValues[c(1:j)])) #sums all the previous values
-  accMonInter<- sum(as.numeric(monthlyInterest[c(1:j)])) #sums all the previous values
-  accBen<-sum(as.numeric(benefitPayment[c(1:j)]))#sums all the previous values
-  fundValues[j]<- accPrem + accMonInter - accBen
-}
-fundValueTable<-data.frame(money,fundValues) # getting negative values of fund !!!!
+
+fundValueTable<-data.frame(year,fundValues, interestMonthBased, benefitPay, accInterMonthBased, accBenPay) # getting negative values of fund !!!!
 
 ############ Way 2 #######################
 # This is the same function but I converted premium and benefit to be monthly
-monthlyInter<-list() # Monthly Interest
-monthlyPrem<-list() # Monthly Premium
-monthlyBen<-list() #Monthly Benefit
-
-for (i in 1:tTimes) {
-  monthlyInter[i]<-((1+((earnInterest[i])/12)))
-  monthlyBen[i]<-((1+((benefitPayment[i])/12)))
-  monthlyPrem[i]<-((1+((premiumValues[i])/12)))
-}
-
-# Now, claulating the Fund value, F(t)= MonthlyPremium (t)+ accumlatedMonthlyinterest(t)- Monthlybenefit(t)
-fundValuesAllMonth<-c(0)
-for (j in 1:tTimes) {
-  accPrem2<-sum(as.numeric(monthlyPrem[c(1:j)])) #sums all the previous values
-  accMonInter2<- sum(as.numeric(monthlyInter[c(1:j)])) #sums all the previous values
-  accBen2<-sum(as.numeric(monthlyBen[c(1:j)]))#sums all the previous values
-  fundValuesAllMonth[j]<- accPrem2 + accMonInter2 - accBen2
-}
-
-fundValueTableAllMonthly<-data.frame(money,fundValuesAllMonth) # Still getting negative values of fund !!!!
+# monthlyInter<-list() # Monthly Interest
+# monthlyPrem<-list() # Monthly Premium
+# monthlyBen<-list() #Monthly Benefit
+# 
+# for (i in 1:tTimes) {
+#   monthlyInter[i]<-((1+((earnInterest[i])/12)))
+#   monthlyBen[i]<-((1+((benefitPayment[i])/12)))
+#   monthlyPrem[i]<-((1+((premiumValues[i])/12)))
+# }
+# 
+# # Now, claulating the Fund value, F(t)= MonthlyPremium (t)+ accumlatedMonthlyinterest(t)- Monthlybenefit(t)
+# fundValuesAllMonth<-c(0)
+# for (j in 1:tTimes) {
+#   accPrem2<-sum(as.numeric(monthlyPrem[c(1:j)])) #sums all the previous values
+#   accMonInter2<- sum(as.numeric(monthlyInter[c(1:j)])) #sums all the previous values
+#   accBen2<-sum(as.numeric(monthlyBen[c(1:j)]))#sums all the previous values
+#   fundValuesAllMonth[j]<- accPrem2 + accMonInter2 - accBen2
+# }
+# 
+# fundValueTableAllMonthly<-data.frame(money,fundValuesAllMonth) # Still getting negative values of fund !!!!
 
 ################# way 3 ###################
 
