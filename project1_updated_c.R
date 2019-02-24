@@ -410,6 +410,20 @@ for (i in 1:(tTimes-1)) {
 
 fundValueTable<-data.frame(year,fundValues, interestMonthBased, benefitPay, accInterMonthBased, accBenPay) # getting negative values of fund !!!!
 
+
+
+#------------------- print profit graph -------------------------------------
+meltFundValueTable <- melt(fundValueTable, id="year")
+x11()
+myGraph <- ggplot(meltFundValueTable, aes(x = year, y = value, colour = variable))
+myGraph <- myGraph + geom_point() + labs(title="Company Fund Graph", y = "Money [$US]") + geom_line(linetype = "dashed") +
+  scale_color_manual(labels = c("Fund", "Interest Month based", "Benefit Payment", "Accumulated Interest", "Accumulated Benefit Payment"), values = c("Green","blue", "red", "orange", "chocolate")) 
+myGraph <- myGraph +theme(plot.title = element_text(hjust = 0.5))
+print(myGraph)
+
+ggsave(filename = "images/Company Fund Graph month based interest.png", plot = myGraph)
+
+
 ############ Way 2 #######################
 # This is the same function but I converted premium and benefit to be monthly
 # monthlyInter<-list() # Monthly Interest
