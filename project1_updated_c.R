@@ -243,6 +243,9 @@ bAge = res[3]$bAge
 bBen= res[4]$bBen
 bNps= res[5]$bNps
 
+
+
+
 # for (i in 1:inputNumberClients){ # 10,000 (whole life) incurances with Net Single Premium
 #   
 #   #randomAge <-  sample(lifeTableAges$Age, 1, replace = T, prob = pNormal) # there was a bug before lifeTableAges instead of lifeTableAges$Age
@@ -367,9 +370,157 @@ for (i in 1:nYears) {
     benefitPayment[i+1] <- payment
   }
   
-}
+} 
 #benefitPayment[i+1] <- 0 #last year payment = 0
 profitTable <- data.frame(surviveYears, money, earnInterest, benefitPayment)
+
+########## Project 2 ################
+# F(t)= Premium (t)+ accumlatedMonthlyinterest(t)- benefit(t)
+tTimes <- max(paymentTable$SurviveYears) +1
+premiumValues<- bDataFrame$NetSinglePremium
+# calucalting the monthy interest by A=p*((1+(annual interest/12))^(12*i)) - from the web
+# calucalting the monthy interest by 1+((i)^12)/12  -given in the class 
+monthlyInterest<-c(0)
+for (i in 1:tTimes) {
+monthlyInterest[i]<-((1+((earnInterest[i])/12)))
+}
+# Now, claulating the Fund value, F(t)= Premium (t)+ accumlatedMonthlyinterest(t)- benefit(t)
+fundValues<-c(0)
+for (j in 1:tTimes) {
+  accPrem<-sum(as.numeric(premiumValues[c(1:j)])) #sums all the previous values
+  accMonInter<- sum(as.numeric(monthlyInterest[c(1:j)])) #sums all the previous values
+  accBen<-sum(as.numeric(benefitPayment[c(1:j)]))#sums all the previous values
+  fundValues[j]<- accPrem + accMonInter - accBen
+}
+fundValueTable<-data.frame(money,fundValues) # getting negative values of fund !!!!
+
+############ Way 2 #######################
+# This is the same function but I converted premium and benefit to be monthly
+monthlyInter<-list() # Monthly Interest
+monthlyPrem<-list() # Monthly Premium
+monthlyBen<-list() #Monthly Benefit
+
+for (i in 1:tTimes) {
+  monthlyInter[i]<-((1+((earnInterest[i])/12)))
+  monthlyBen[i]<-((1+((benefitPayment[i])/12)))
+  monthlyPrem[i]<-((1+((premiumValues[i])/12)))
+}
+
+# Now, claulating the Fund value, F(t)= MonthlyPremium (t)+ accumlatedMonthlyinterest(t)- Monthlybenefit(t)
+fundValuesAllMonth<-c(0)
+for (j in 1:tTimes) {
+  accPrem2<-sum(as.numeric(monthlyPrem[c(1:j)])) #sums all the previous values
+  accMonInter2<- sum(as.numeric(monthlyInter[c(1:j)])) #sums all the previous values
+  accBen2<-sum(as.numeric(monthlyBen[c(1:j)]))#sums all the previous values
+  fundValuesAllMonth[j]<- accPrem2 + accMonInter2 - accBen2
+}
+
+fundValueTableAllMonthly<-data.frame(money,fundValuesAllMonth) # Still getting negative values of fund !!!!
+
+################# way 3 ###################
+
+# investmentInteres2 <- as.numeric(inputsProject1[inputsProject1$label == "investmentInterest", c("value")])
+# monthInvest<-c(0)
+# for(i in 1:length(investmentInteres2)){
+#   monthInvest[i]<- (1+investmentInteres2[i]/12)
+# }
+# numYears <- max(paymentTable$SurviveYears)
+# monthNPre<-c(0)
+# for(i in 1:length(bDataFrame$NetSinglePremium)){
+#   monthNPre[i]<- (1+bDataFrame$NetSinglePremium[i]/12)
+# }
+# moneyMonthPre <- sum(as.numeric(monthNPre))
+# eInterest <- vector(mode="numeric", length=(nYears+1))
+# eInterest[1] <- moneyMonthPre*monthInvest
+# 
+# 
+# 
+# benefitPayment <- vector(mode="integer", length=(nYears+1))
+# #find payment of the year 0
+# payment <- paymentTable[paymentTable$SurviveYears == 0, c("Benefit")] 
+# if(length(payment) == 0){ #sometime there is no payment for specific year, so convert numeric(0) to 0
+#   benefitPayment[1] <- 0
+# }else{
+#   benefitPayment[1] <- payment
+# }
+# 
+# surviveYears <- vector(mode="integer", length=(nYears+1))
+# surviveYears[1] <- 0
+# 
+# for (i in 1:nYears) {
+#   surviveYears[i+1] <- i
+#   
+#   money[i+1] <- money[i] + earnInterest[i] - benefitPayment[i]
+#   
+#   if(money[i+1] > 0){ #only calculate earnInterest when money > 0
+#     earnInterest[i+1] <- money[i+1]*investmentInterest
+#   }else {
+#     earnInterest[i+1] <- 0
+#   }
+#   
+#   #find payment of next year
+#   payment <- paymentTable[paymentTable$SurviveYears == i, c("Benefit")] 
+#   if(length(payment) == 0){ #sometime there is no payment for specific year, so convert numeric(0) to 0
+#     benefitPayment[i+1] <- 0
+#   }else{
+#     benefitPayment[i+1] <- payment
+#   }
+#   
+# } 
+# #benefitPayment[i+1] <- 0 #last year payment = 0
+# profitTable <- data.frame(surviveYears, money, earnInterest, benefitPayment)
+# fundValues<-as.numeric(fundVal)
+# creating the data frame
+
+#$Fund<-fundValues
+
+# investmentInterest2 <- as.numeric(inputsProject1[inputsProject1$label == "investmentInterest", c("value")])
+# tTimes <- max(paymentTable$SurviveYears)
+# #fundValue <- sum(bDataFrame$NetSinglePremium)
+# premiumValues<- bDataFrame$NetSinglePremium
+# interest <- vector(mode="numeric", length=(tTimes +1))
+# # accumulated interests
+# for (i in 1:tTimes){
+# interest[i] <- fundValue*investmentInterest2[i-1]
+# }
+# benefit <- vector(mode="integer", length=(tTimes +1))
+# 
+# #find payment of the year 0
+# Bpayment <- paymentTable[paymentTable$SurviveYears == 0, c("Benefit")] 
+# if(length(Bpayment) == 0){ #sometime there is no payment for specific year, so convert numeric(0) to 0
+#   benefit[1] <- 0
+# }else{
+#   benefit[1] <- Bpayment
+# }
+# yearsSurvived
+# yearsSurvived <- vector(mode="integer", length=(tTimes +1))
+# yearsSurvived[1] <- 0
+# 
+# for (i in 1:tTimes) {
+#   yearsSurvived[i+1] <- i
+#   # calucalting the monthy interest by A=p*(1+(annual interest/12))^(12*i)
+#   monthlyInterest[i]<-
+#   fundValue[i+1] <- premiumValues[i] + interest[i] - benefit[i]
+#   
+#   if(fundValue[i+1] > 0){ #only calculate interest when fundValue > 0
+#     interest[i+1] <- fundValue[i+1]*investmentInterest2
+#   }else {
+#     interest[i+1] <- 0
+#   }
+# }
+# 
+# #find payment of next year
+# Bpayment <- paymentTable[paymentTable$SurviveYears == i, c("Benefit")] 
+# if(length(Bpayment) == 0){ #sometime there is no payment for specific year, so convert numeric(0) to 0
+#   benefitPayment[i+1] <- 0
+# }else{
+#   benefitPayment[i+1] <- Bpayment
+# }
+# 
+# 
+# #benefitPayment[i+1] <- 0 #last year payment = 0
+# fundValueTable <- data.frame(yearsSurvived, fundValue, interest, benefit)
+
 
 # -------------- print business data frame -------------------------------
 x11()
