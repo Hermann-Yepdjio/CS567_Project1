@@ -2,7 +2,7 @@
 #                                  Life Inurance Project                             #
 #                               Central Washington University                        #
 #                            Graduate School of Computer Science                     #
-#                          Chao Huang, Hermann Yepdjio, Lubna Alzamil                  #      
+#                          Chao Huang, Hermann Yepdjio, Lubna Alzamil                #      
 #                                      Supervised By                                 #
 #                               Professor Donald Davendra                            #
 #                                            &                                       #
