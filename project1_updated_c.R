@@ -11,9 +11,8 @@
 
 
 #setwd("/media/hermann/Tonpi/tonpi/Collegecourses/CWU/Graduate School/Winter 2019/CS 567/Projects/Project1/3R")
-#setwd("C:\\Users\\Lubna\\Desktop\\CWU\\Winter2019\\Stat\\ProjectOneTwo\\CS567_Project1")
+setwd("C:\\Users\\Lubna\\Desktop\\CWU\\Winter2019\\Stat\\ProjectOneTwo\\CS567_Project1")
 #setwd("C:/Users/chao_/Desktop/CWU/Courses/Q1 Winter 2019/CS567 Computational Statistics R/Project2/CS567_Project1")
-setwd("C:/Users/huanglinc/Desktop/Project2 Statistics/CS567_Project1")
 inputsProject1 <- read.delim("project1_inputs.txt", header = TRUE, sep = "\t", dec = ".", stringsAsFactors=FALSE) #read the inputs values from the project1_inputs.txt file
 print (inputsProject1)
 #this file is to run 
@@ -25,19 +24,10 @@ source("life_table.R")
 #install library if not exist
 if (!require(ggplot2)) install.packages('ggplot2')
 if (!require(reshape)) install.packages('reshape')
-if (!require(plotly)) install.packages('plotly')
 library(ggplot2)
 library(reshape)
-library(plotly)
-
-
-p <- plot_ly(z = ~volcano) %>% add_surface()
-
-print(p)
-
-
-
 x11()
+
 myGraph <- ggplot(lifeTable, aes(ages, A_x))
 myGraph <- myGraph + geom_point() + labs(title = "Ages Vs Ax") + theme(plot.title = element_text(hjust = 0.5)) + xlab("Age") + ylab("Ax")
 print(myGraph)
@@ -401,84 +391,180 @@ myGraph <- myGraph +
 print(myGraph)
 ggsave(filename = "images/Company Fund Graph month based interest.png", plot = myGraph)
 
-########## end of Project 2 ##################
+library(plotly)
+fund3D<-data.frame(year=as.factor(year),fundValues=as.factor(fundValues), interestMonthBased=as.factor(interestMonthBased))
+# 3D Scatter
+p2 <- plot_ly(fund3D, x = interestMonthBased, y = year, z = fundValues,  colors = c('red')) %>%
+  add_markers() %>%
+  layout(scene = list(xaxis = list(title = 'Monthly Interests'),
+                      yaxis = list(title = 'Year'),
+                      zaxis = list(title = 'Fund [$US]')))
+#print(p2)
 
-#------------------------------------------------------------------------------------------------------
-
-
-
+htmlwidgets::saveWidget(as_widget(p2), "Scattered3DFundValues.html")
 ########## Function Project 2 ################
+
 # F(t)= Premium (t)+ accumlatedMonthlyinterest(t)- benefit(t)
 
+
+
 calculateFundValue <- function(investmentInterest){
+  
   tTimes <- length(profitTable$surviveYears)
   
+  
+  
   #initialized array
+  
   fundValues <- vector(mode="numeric", length=tTimes)
+  
   interestMonthBased <- vector(mode="numeric", length=tTimes)
   
+  
+  
   #data for year 0
+  
   year <- profitTable$surviveYears
+  
   fundValues[1] <- profitTable$money[1]
+  
   interestMonthBased[1] <- fundValues[1] * (1+investmentInterest/12)^12 - fundValues[1] # only calculate the interest
+  
   benefitPay <- profitTable$benefitPayment
+  
   accInterMonthBased[1] <- interestMonthBased[1] 
+  
   accBenPay[1]<- benefitPay[1]
+  
+  
   
   for (i in 1:(tTimes-1)) {
     
+    
+    
     fundValues[i+1] <- fundValues[i] + interestMonthBased[i] - benefitPay[i]
     
+    
+    
     if(fundValues[i+1] > 0){ #only calculate Interest when fund > 0
+      
       interestMonthBased[i+1] <- fundValues[i+1] * (1+investmentInterest/12)^12 - fundValues[i+1] 
-    }
-    else {
-      interestMonthBased[i+1] <- 0
+      
     }
     
+    else {
+      
+      interestMonthBased[i+1] <- 0
+      
+    }
+    
+    
+    
   }
-
+  
+  
+  
   fT <- data.frame(year,fundValues, interestMonthBased, benefitPay) 
+  
   return(fT)
+  
 }
+
+
 
 interestSeq <- seq(0.05, 0.053, 0.0005)
+
 yearSeq <- fundValueTable$year
+
 matrixFund <- matrix(, nrow = length(yearSeq), ncol = length(interestSeq)) # empty matrix
+
 column <- 1
+
 for (i in interestSeq){
+  
   matrixFund[,column] <- calculateFundValue(i)$fundValues
+  
   column <- column + 1
+  
 }
 
+
+
 #p <- plot_ly(x = c(0.5,0.51) , y = fundValueTable$year, z = cbind(calculateFundValue(0.05)$fundValues,calculateFundValue(0.051)$fundValues)) %>% add_surface()
+
 p <- plot_ly(x = interestSeq  , y = yearSeq, z = matrixFund)  %>%
+  
   layout(
+    
     title = "Fund Values Evolution based on different Interest",
+    
     scene = list(
-      xaxis = list(title = "Interest Monthly Based"),
+      
+      xaxis = list(title = "Monthly Interests"),
+      
       yaxis = list(title = "Years"),
+      
       zaxis = list(title = "Fund [$US]")
+      
     )) %>% 
+  
   add_surface(
+    
     contours = list(
+      
       z = list(
+        
         show=TRUE,
+        
         usecolormap=TRUE,
+        
         highlightcolor="#ff0000",
+        
         project=list(z=TRUE)
+        
       )
+      
     )
+    
   ) %>%
+  
   layout(
+    
     scene = list(
+      
       camera=list(
+        
         eye = list(x=1.87, y=0.88, z=-0.64)
+        
       )
+      
     )
+    
   )
 
+
+
 print(p)
+htmlwidgets::saveWidget(as_widget(p), "Surface3DFundValues.html")
+# 3D scatter # there is one error 
+x <- interestSeq 
+y <- yearSeq
+z <- matrixFund
+
+length(z) = length(y)= length(x)
+df<-data.frame(x,y,z)
+p3 <- plot_ly(z = matrixFund, type = "surface") %>%
+  add_trace(data = df, x = x, y = y, z = z, mode = "markers", type = "scatter3d",
+            marker = list(size = 10, color = "red", symbol = 104))
+
+#print(p3)
+
+htmlwidgets::saveWidget(as_widget(p3), "Scattered3DFundValuesDiff.html")
+#https://stackoverflow.com/questions/36049595/mixing-surface-and-scatterplot-in-a-single-3d-plot
+
+########## end of Project 2 ##################
+
+#------------------------------------------------------------------------------------------------------
 
 
 endTime <- Sys.time() # calulating the ending time
