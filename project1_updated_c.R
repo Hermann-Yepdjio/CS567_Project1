@@ -214,13 +214,15 @@ for (i in 2:lifeTableTotalRow)
 {
   lifeTableAsVector = c(lifeTableAsVector, as.vector(lifeTable[i,], mode = 'numeric'))
 }
-dim = c(length(lifeTableAges$Age), 10, length(lifeTableAges$Age)) 
+
+#command to compile in R:  R CMD SHLIB c_code.c 
+dim = c(length(lifeTableAges$Age),length(lifeTable), length(lifeTableAges$Age)) 
 dyn.load("c_code.dll")
 res = .C("for_loop", lifeTable=as.numeric(lifeTableAsVector), dim = as.integer(dim), bAge = as.integer(bAge), bBen=as.integer(bBen), bNps = as.numeric(bNps), bFAge = as.integer(bFAge), lifeTableAges = as.integer(lifeTableAges$Age), inputNumberClients =as.integer(inputNumberClients))
-bFAge = res[6]$bFAge
-bAge = res[3]$bAge
-bBen= res[4]$bBen
-bNps= res[5]$bNps
+bFAge = res$bFAge
+bAge = res$bAge
+bBen= res$bBen
+bNps= res$bNps
 
 
 bDataFrame <- data.frame(Age = bAge, Benefit = bBen, NetSinglePremium = bNps, Die = bFAge) #Creating the final dataframe

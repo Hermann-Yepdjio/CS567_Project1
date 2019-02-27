@@ -15,7 +15,7 @@ void test(double *a, double *b, double *c)
 
 void for_loop(double *table, int* dim, int* bAge, int* bBen, double* bNps, int* bFAge, int* lifeTableAges, int* inputNumberClients)
 {
-  //srand(clock());
+  srand(clock());
   int i;
   double lifeTable[dim[0]][dim[1]];
   int j = 0;
