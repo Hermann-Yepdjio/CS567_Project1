@@ -11,8 +11,9 @@
 
 
 #setwd("/media/hermann/Tonpi/tonpi/Collegecourses/CWU/Graduate School/Winter 2019/CS 567/Projects/Project1/3R")
-setwd("C:\\Users\\Lubna\\Desktop\\CWU\\Winter2019\\Stat\\ProjectOneTwo\\CS567_Project1")
+#setwd("C:\\Users\\Lubna\\Desktop\\CWU\\Winter2019\\Stat\\ProjectOneTwo\\CS567_Project1")
 #setwd("C:/Users/chao_/Desktop/CWU/Courses/Q1 Winter 2019/CS567 Computational Statistics R/Project2/CS567_Project1")
+setwd("C:/Users/huanglinc/Desktop/P2 Sta/CS567_Project1")
 inputsProject1 <- read.delim("project1_inputs.txt", header = TRUE, sep = "\t", dec = ".", stringsAsFactors=FALSE) #read the inputs values from the project1_inputs.txt file
 print (inputsProject1)
 #this file is to run 
@@ -499,9 +500,7 @@ p <- plot_ly(x = interestSeq  , y = yearSeq, z = matrixFund)  %>%
     title = "Fund Values Evolution based on different Interest",
     
     scene = list(
-      
       xaxis = list(title = "Monthly Interests"),
-      
       yaxis = list(title = "Years"),
       
       zaxis = list(title = "Fund [$US]")
@@ -561,6 +560,53 @@ p3 <- plot_ly(z = matrixFund, type = "surface") %>%
 
 htmlwidgets::saveWidget(as_widget(p3), "Scattered3DFundValuesDiff.html")
 #https://stackoverflow.com/questions/36049595/mixing-surface-and-scatterplot-in-a-single-3d-plot
+
+
+
+#https://plot.ly/r/3d-line-plots/
+
+df <- data.frame(matrix(ncol = 3, nrow = 0))
+x <- c("year", "fundValues", "interest")
+colnames(df) <- x
+
+for (i in interestSeq){
+ 
+  fv <- calculateFundValue(i)
+  tempdf <- fv[,c("year", "fundValues")]
+  tempdf$interest <- rep(i, length(tempdf$year))
+  df <- rbind(df, tempdf)
+  
+}
+
+df$interest <- as.factor(df$interest)
+
+
+p4 <- plot_ly(df, 
+             x = ~year, 
+             y = ~fundValues, 
+             z = ~interest, 
+             type = 'scatter3d', 
+             mode = 'lines', 
+             color = ~interest,
+             line = list(width = 4)
+             )
+
+print(p4)
+htmlwidgets::saveWidget(as_widget(p4), "Line3DFundValuesDiff.html")
+
+p5 <- plot_ly(df, 
+              x = ~year, 
+              y = ~fundValues, 
+              z = ~interest, 
+              type = 'scatter3d', 
+              mode = 'markers', 
+              color = ~interest,
+              marker = list(size = 3, symbol = 104)
+              )
+
+print(p5)
+htmlwidgets::saveWidget(as_widget(p5), "marker3DFundValuesDiff.html")
+
 
 ########## end of Project 2 ##################
 
