@@ -99,7 +99,7 @@ print(paste("Number of clients: ", inputNumberClients))
 #   #print(myGraph + geom_point() + geom_point(aes(x=randomFinalAge, y=0.02), color="red"))
 #   #Sys.sleep(2)
 # }
-randomAge <- 0
+randomAge <- 1
 bAge <- rep(randomAge, inputNumberClients) # concatenate
 bBen <- rep(100, inputNumberClients) # concatenate
 n <- length(bAge)
@@ -215,35 +215,77 @@ bDataFrame$SurviveYears <- bDataFrame$Die - bDataFrame$Age
 #write.csv(bDataFrame, file="BusinessData.csv",  append = FALSE) # creating the CSV file, each time we run the code new file will be created and the older file will be replaced 
 write.table(bDataFrame, file="BusinessData.csv", row.names=F, col.names=T, append=F, sep=",")
 
+#-------------------------------------------------------------------------
 
 paymentTable <- bDataFrame[c("SurviveYears", "Benefit")]
-paymentTable <- aggregate(. ~SurviveYears, data=paymentTable, sum, na.rm = TRUE)
-
+paymentTable <- aggregate(. ~SurviveYears, data=paymentTable, sum, na.rm = TRUE) #group sum, this part can be improve creating own code for grouping and put 0 in the year without payment
 investmentInterest <- as.numeric(inputsProject1[inputsProject1$label == "investmentInterest", c("value")])
-
-surviveYears <- 0
+nYears <- max(paymentTable$SurviveYears)
 money <- sum(bDataFrame$NetSinglePremium)
-earnInterest <- money*investmentInterest
+earnInterest <- vector(mode="numeric", length=(nYears+1))
+earnInterest[1] <- money*investmentInterest
+benefitPayment <- vector(mode="integer", length=(nYears+1))
+reservePayment <- vector(mode="numeric", length=(nYears+1))
 
-benefitPayment <- 0
-#find payment of the year
-payment <- paymentTable[paymentTable$SurviveYears == 0, c("Benefit")] 
-if(length(payment) == 0){ #sometime there is no payment for specific year, so convert numeric(0) to 0
-  benefitPayment <- 0
-}else{
-  benefitPayment <- payment
+
+#----part of project 2, calculating reserve------
+nrowbDataFrame <- nrow(bDataFrame)
+reserveTable <- data.frame(matrix(ncol = 3, nrow = nYears))
+colnames(reserveTable) <- c("SurviveYears", "Reserve", "NumberPolicies")
+
+
+for (reserveYear in 1:nYears){
+  counter<-0
+  reserveAmount <- 0
+  for (i in 1:nrowbDataFrame){
+    if (bDataFrame$SurviveYears[i] >= reserveYear)
+    {
+      counter <- counter + 1 
+      #t_V = 1 - a_(x+t)/a_x
+      x <- bDataFrame$Age[i]
+      a_x <- lifeTable[lifeTable$ages == x, c("a_x")]
+      a_x_t <- lifeTable[lifeTable$ages == (x+reserveYear), c("a_x")]
+      t_V <- 1 - (a_x_t/a_x)
+      reserveAmount <- reserveAmount + bDataFrame$Benefit[i]*t_V
+    }
+  }
+  reserveTable$SurviveYears[reserveYear] <- reserveYear-1
+  reserveTable$NumberPolicies[reserveYear] <- counter
+  reserveTable$Reserve[reserveYear] <- reserveAmount
+  
 }
 
-nYears <- max(paymentTable$SurviveYears)
+#-----end calculating reserve--------------------
+
+
+
+#---------calculating profit table---------------project2: reserve added----
+#find payment of the year 0
+payment <- paymentTable[paymentTable$SurviveYears == 0, c("Benefit")] 
+if(length(payment) == 0){ #sometime there is no payment for specific year, so convert numeric(0) to 0
+  benefitPayment[1] <- 0
+}else{
+  benefitPayment[1] <- payment
+}
+#find reserve of the year 0
+reserve <- reserveTable[reserveTable$SurviveYears ==0, c("Reserve")]
+if(length(reserve) == 0){ #sometime there is no reserve for specific year, so convert numeric(0) to 0
+  reservePayment[1] <- 0
+}else{
+  reservePayment[1] <- reserve
+}
+
+surviveYears <- vector(mode="integer", length=(nYears+1))
+surviveYears[1] <- 0
 
 for (i in 1:nYears) {
   surviveYears[i+1] <- i
-
-  money[i+1] <- money[i] + earnInterest[i] - benefitPayment[i]
+  money[i+1] <- money[i] + earnInterest[i] - benefitPayment[i] 
   
   if(money[i+1] > 0){ #only calculate earnInterest when money > 0
     earnInterest[i+1] <- money[i+1]*investmentInterest
-  }else {
+  }
+  else {
     earnInterest[i+1] <- 0
   }
   
@@ -251,13 +293,27 @@ for (i in 1:nYears) {
   payment <- paymentTable[paymentTable$SurviveYears == i, c("Benefit")] 
   if(length(payment) == 0){ #sometime there is no payment for specific year, so convert numeric(0) to 0
     benefitPayment[i+1] <- 0
-  }else{
+  }
+  else{
     benefitPayment[i+1] <- payment
   }
   
-}
+  #find reserve of next year
+  reserve <- reserveTable[reserveTable$SurviveYears == i, c("Reserve")]
+  if(length(reserve) == 0){ #sometime there is no reserve for specific year, so convert numeric(0) to 0
+    reservePayment[i+1] <- 0
+  }else{
+    reservePayment[i+1] <- reserve
+  }
+  
+} 
+
 #benefitPayment[i+1] <- 0 #last year payment = 0
-profitTable <- data.frame(surviveYears, money, earnInterest, benefitPayment)
+profitTable <- data.frame(surviveYears, money, earnInterest, benefitPayment, reservePayment)
+#calculate  profit
+profitTable$profit <- profitTable$money + profitTable$earnInterest - profitTable$benefitPayment - profitTable$reservePayment
+
+#----------end calculating profit table--------
 
 # -------------- print business data frame -------------------------------
 x11()
@@ -291,12 +347,17 @@ print(myGraph)
 ggsave(filename = "images_test/Random Survive Years Histogram.png", plot = myGraph)
 
 
-#------------------- print profit graph -------------------------------------
+#------------------- Plot profit graph -------------------------------------
 meltProfitTable <- melt(profitTable, id="surviveYears")
 x11()
 myGraph <- ggplot(meltProfitTable, aes(x = surviveYears, y = value, colour = variable))
-myGraph <- myGraph + geom_point() + labs(title="Company Profit Graph", y = "Money [$US]") + geom_line(linetype = "dashed") +
-  scale_color_manual(labels = c("Profit", "Interest", "Payment"), values = c("Green","blue", "red")) 
+myGraph <- myGraph + 
+  geom_point() + 
+  labs(title="Company Profit Graph", y = "Money [$US]") + 
+  geom_line(linetype = "dashed") +
+  scale_color_manual(labels = c("Fund", "Interest", "Payment", "Reserve", "Profit"), 
+                     values = c("yellow","blue", "red", "purple", "green")) 
+myGraph <- myGraph +theme(plot.title = element_text(hjust = 0.5))
 print(myGraph)
 
 ggsave(filename = "images_test/Company Profit Graph.png", plot = myGraph)
