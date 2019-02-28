@@ -25,8 +25,11 @@ source("life_table.R")
 #install library if not exist
 if (!require(ggplot2)) install.packages('ggplot2')
 if (!require(reshape)) install.packages('reshape')
+if (!require(plotly)) install.packages('plotly')
 library(ggplot2)
 library(reshape)
+library(plotly)
+
 x11()
 
 myGraph <- ggplot(lifeTable, aes(ages, A_x))
@@ -151,38 +154,6 @@ CalculateFinalAgePerfectData <- function(inputAge) { #---only for testing
 }
 
 
-CalculateFinalAgeSemiPerfectData <- function(inputAge) { #---only for testing
-#calculate probability of (x) lives t years  t_p_x where x = inputAges
-previousAgeP <- lifeTable[ages == (inputAge - 1), c("t_p_x0")]
-if (inputAge > 0) {
-    pLives <- lifeTable[ages >= inputAge, c("t_p_x0")]/previousAgeP
-  } 
-else {
-    pLives <- lifeTable[ages >= inputAge, c("t_p_x0")]
-  }
-  
-  pLivesAges <- lifeTable[ages >= inputAge, c("ages")]
-  pCurveX <- data.frame(pLivesAges, pLives)
-  
-  #calculate probability tl1_q_x that x survives t years and dies within 1 year
-  pCurveXRow <- nrow(pCurveX)
-  
-  #probability of dead based on input age
-  pCurveX$tl1_q_x[1] <- 1 - pCurveX$pLives[1] # firt data important,,, to avoid bug
-  for (j in 2:(pCurveXRow)) {
-    
-    #small bug which does not consider the 0|1_q_x data..... also add q_x of 1 in the last year automatically? 
-    pCurveX$tl1_q_x[j] <- pCurveX$pLives[j-1] - pCurveX$pLives[j]
-    #pCurveX$tl1_q_x[j] <- pCurveX$pLives[j] - pCurveX$pLives[j+1] #i = u in the pdf   1 = t in pdf
-  }
-  
-  #note: returns a vector
-  bFAge <- sample(pCurveX$pLivesAges, inputNumberClients, replace = T, pCurveX$tl1_q_x)
-  return(bFAge)
-}
-
-
-
 
 
 
@@ -241,10 +212,10 @@ money <- sum(bDataFrame$NetSinglePremium)
 earnInterest <- vector(mode="numeric", length=(nYears+1))
 earnInterest[1] <- money*investmentInterest
 benefitPayment <- vector(mode="integer", length=(nYears+1))
-reservePayment <- vector(mode="numeric", length=(nYears+1))
+reserveHold <- vector(mode="numeric", length=(nYears+1))
 
 
-#----part of project 2, calculating reserve------
+#----part of project 2, calculating reserve------ convert this part  to c
 nrowbDataFrame <- nrow(bDataFrame)
 reserveTable <- data.frame(matrix(ncol = 3, nrow = nYears))
 colnames(reserveTable) <- c("SurviveYears", "Reserve", "NumberPolicies")
@@ -259,9 +230,8 @@ for (reserveYear in 1:nYears){
       counter <- counter + 1 
       #t_V = 1 - a_(x+t)/a_x
       x <- bDataFrame$Age[i]
-      a_x <- lifeTable[lifeTable$ages == x, c("a_x")]
-      a_x_t <- lifeTable[lifeTable$ages == (x+reserveYear), c("a_x")]
-      t_V <- 1 - (a_x_t/a_x)
+      A_x_t <- lifeTable$A_x[(x+1+reserveYear)] # faster
+      t_V <- A_x_t
       reserveAmount <- reserveAmount + bDataFrame$Benefit[i]*t_V
     }
   }
@@ -286,9 +256,9 @@ if(length(payment) == 0){ #sometime there is no payment for specific year, so co
 #find reserve of the year 0
 reserve <- reserveTable[reserveTable$SurviveYears ==0, c("Reserve")]
 if(length(reserve) == 0){ #sometime there is no reserve for specific year, so convert numeric(0) to 0
-  reservePayment[1] <- 0
+  reserveHold[1] <- 0
 }else{
-  reservePayment[1] <- reserve
+  reserveHold[1] <- reserve
 }
 
 surviveYears <- vector(mode="integer", length=(nYears+1))
@@ -317,17 +287,17 @@ for (i in 1:nYears) {
   #find reserve of next year
   reserve <- reserveTable[reserveTable$SurviveYears == i, c("Reserve")]
   if(length(reserve) == 0){ #sometime there is no reserve for specific year, so convert numeric(0) to 0
-    reservePayment[i+1] <- 0
+    reserveHold[i+1] <- 0
   }else{
-    reservePayment[i+1] <- reserve
+    reserveHold[i+1] <- reserve
   }
   
 } 
 
 #benefitPayment[i+1] <- 0 #last year payment = 0
-profitTable <- data.frame(surviveYears, money, earnInterest, benefitPayment, reservePayment)
+profitTable <- data.frame(surviveYears, money, earnInterest, benefitPayment, reserveHold)
 #calculate  profit
-profitTable$profit <- profitTable$money + profitTable$earnInterest - profitTable$benefitPayment - profitTable$reservePayment
+profitTable$profit <- profitTable$money + profitTable$earnInterest - profitTable$benefitPayment - profitTable$reserveHold
 
 #----------end calculating profit table--------
 
@@ -449,7 +419,7 @@ myGraph <- myGraph +
 print(myGraph)
 ggsave(filename = "images/Company Fund Graph month based interest.png", plot = myGraph)
 
-library(plotly)
+
 fund3D<-data.frame(year=as.factor(year),fundValues=as.factor(fundValues), interestMonthBased=as.factor(interestMonthBased))
 # 3D Scatter
 p2 <- plot_ly(fund3D, x = interestMonthBased, y = year, z = fundValues,  colors = c('red')) %>%
@@ -464,181 +434,130 @@ htmlwidgets::saveWidget(as_widget(p2), "Scattered3DFundValues.html")
 
 # F(t)= Premium (t)+ accumlatedMonthlyinterest(t)- benefit(t)
 
-
-
-calculateFundValue <- function(investmentInterest){
-  
+CalculateFundValue <- function(investmentInterest){
   tTimes <- length(profitTable$surviveYears)
-  
-  
-  
   #initialized array
-  
   fundValues <- vector(mode="numeric", length=tTimes)
-  
   interestMonthBased <- vector(mode="numeric", length=tTimes)
-  
-  
-  
+
   #data for year 0
-  
   year <- profitTable$surviveYears
-  
   fundValues[1] <- profitTable$money[1]
-  
   interestMonthBased[1] <- fundValues[1] * (1+investmentInterest/12)^12 - fundValues[1] # only calculate the interest
-  
   benefitPay <- profitTable$benefitPayment
-  
-  accInterMonthBased[1] <- interestMonthBased[1] 
-  
-  accBenPay[1]<- benefitPay[1]
-  
-  
+
   
   for (i in 1:(tTimes-1)) {
-    
-    
-    
     fundValues[i+1] <- fundValues[i] + interestMonthBased[i] - benefitPay[i]
-    
-    
-    
     if(fundValues[i+1] > 0){ #only calculate Interest when fund > 0
-      
       interestMonthBased[i+1] <- fundValues[i+1] * (1+investmentInterest/12)^12 - fundValues[i+1] 
-      
     }
-    
     else {
-      
       interestMonthBased[i+1] <- 0
-      
     }
-    
-    
-    
   }
   
-  
-  
   fT <- data.frame(year,fundValues, interestMonthBased, benefitPay) 
-  
   return(fT)
   
 }
 
+###############Function calculate profit project2###################
+
+CalculateProfit <- function(investmentInterest){
+  #---------calculating profit table---------------project2: reserve added----
+  tTimes <- length(profitTable$surviveYears)
+  #initialized array
+  fundValues <- vector(mode="numeric", length=tTimes)
+  interest <- vector(mode="numeric", length=tTimes)
+  
+  #data for year 0
+  year <- profitTable$surviveYears
+  fundValues[1] <- profitTable$money[1]
+  interest[1] <- fundValues[1] * investmentInterest # only calculate the interest
+  benefitPay <- profitTable$benefitPayment
+  reserveHold <- profitTable$reserveHold
+  
+  for (i in 1:(tTimes-1)) {
+    fundValues[i+1] <- fundValues[i] + interest[i] - benefitPay[i]
+    if(fundValues[i+1] > 0){ #only calculate Interest when fund > 0
+      interest[i+1] <- fundValues[i+1] * investmentInterest
+    }
+    else {
+      interest[i+1] <- 0
+    }
+  }
+  
+  pT <- data.frame(year,fundValues, interest, benefitPay, reserveHold) 
+  pT$profit <- pT$fundValues + pT$interest - pT$benefitPay - pT$reserveHold
+
+  return(pT)
+}
+
+##############end calculate profit project2#################
 
 
-interestSeq <- seq(0.05, 0.053, 0.0005)
-
+#-------surface plot of fund, monthly based interest----------------
+interestSeq <- seq(0.05, 0.055, 0.0005)
 yearSeq <- fundValueTable$year
-
 matrixFund <- matrix(, nrow = length(yearSeq), ncol = length(interestSeq)) # empty matrix
-
 column <- 1
 
 for (i in interestSeq){
-  
-  matrixFund[,column] <- calculateFundValue(i)$fundValues
-  
+  matrixFund[,column] <- CalculateFundValue(i)$fundValues
   column <- column + 1
-  
 }
 
 
-
-#p <- plot_ly(x = c(0.5,0.51) , y = fundValueTable$year, z = cbind(calculateFundValue(0.05)$fundValues,calculateFundValue(0.051)$fundValues)) %>% add_surface()
-
 p <- plot_ly(x = interestSeq  , y = yearSeq, z = matrixFund)  %>%
-  
   layout(
-    
     title = "Fund Values Evolution based on different Interest",
-    
     scene = list(
       xaxis = list(title = "Monthly Interests"),
       yaxis = list(title = "Years"),
-      
       zaxis = list(title = "Fund [$US]")
-      
     )) %>% 
-  
   add_surface(
-    
     contours = list(
-      
       z = list(
-        
         show=TRUE,
-        
         usecolormap=TRUE,
-        
         highlightcolor="#ff0000",
-        
         project=list(z=TRUE)
-        
       )
-      
     )
-    
   ) %>%
-  
   layout(
-    
     scene = list(
-      
       camera=list(
-        
         eye = list(x=1.87, y=0.88, z=-0.64)
-        
       )
-      
     )
-    
   )
-
-
 
 print(p)
 htmlwidgets::saveWidget(as_widget(p), "Surface3DFundValues.html")
-# 3D scatter # there is one error 
-x <- interestSeq 
-y <- yearSeq
-z <- matrixFund
-
-length(z) = length(y)= length(x)
-df<-data.frame(x,y,z)
-p3 <- plot_ly(z = matrixFund, type = "surface") %>%
-  add_trace(data = df, x = x, y = y, z = z, mode = "markers", type = "scatter3d",
-            marker = list(size = 10, color = "red", symbol = 104))
-
-#print(p3)
-
-htmlwidgets::saveWidget(as_widget(p3), "Scattered3DFundValuesDiff.html")
-#https://stackoverflow.com/questions/36049595/mixing-surface-and-scatterplot-in-a-single-3d-plot
-
-
+#-------End:  surface plot of fund, monthly based interest----------------
 
 #https://plot.ly/r/3d-line-plots/
+
+
+#-----------line plot of fund, monthly based interest--------------------
 
 df <- data.frame(matrix(ncol = 3, nrow = 0))
 x <- c("year", "fundValues", "interest")
 colnames(df) <- x
 
 for (i in interestSeq){
- 
-  fv <- calculateFundValue(i)
+  fv <- CalculateFundValue(i)
   tempdf <- fv[,c("year", "fundValues")]
   tempdf$interest <- rep(i, length(tempdf$year))
   df <- rbind(df, tempdf)
-  
 }
 
 df$interest <- as.factor(df$interest)
 
-
-p4 <- plot_ly(df, 
+p <- plot_ly(df, 
              x = ~year, 
              y = ~fundValues, 
              z = ~interest, 
@@ -647,9 +566,53 @@ p4 <- plot_ly(df,
              color = ~interest,
              line = list(width = 4)
              )
+print(p)
+htmlwidgets::saveWidget(as_widget(p), "Line3DFundValuesDiff.html")
 
-print(p4)
-htmlwidgets::saveWidget(as_widget(p4), "Line3DFundValuesDiff.html")
+
+#-------surface plot of profit----------------
+interestSeq <- seq(0.05, 0.053, 0.0005)
+yearSeq <- profitTable$surviveYears
+matrixProfit <- matrix(, nrow = length(yearSeq), ncol = length(interestSeq)) # empty matrix
+column <- 1
+
+for (i in interestSeq){
+  matrixProfit[,column] <- CalculateProfit(i)$profit
+  column <- column + 1
+}
+
+
+p <- plot_ly(x = interestSeq  , y = yearSeq, z = matrixProfit)  %>%
+  layout(
+    title = "Profit Evolution based on different Interest",
+    scene = list(
+      xaxis = list(title = "Interests"),
+      yaxis = list(title = "Years"),
+      zaxis = list(title = "Profit [$US]")
+    )) %>% 
+  add_surface(
+    contours = list(
+      z = list(
+        show=TRUE,
+        usecolormap=TRUE,
+        highlightcolor="#ff0000",
+        project=list(z=TRUE)
+      )
+    )
+  ) %>%
+  layout(
+    scene = list(
+      camera=list(
+        eye = list(x=1.87, y=0.88, z=-0.64)
+      )
+    )
+  )
+
+print(p)
+htmlwidgets::saveWidget(as_widget(p), "Surface3DFundValues.html")
+#-------End:  surface plot of profit---------------
+
+#-------end line plot----------------------
 
 # p5 <- plot_ly(df, 
 #               x = ~year, 
@@ -673,4 +636,3 @@ htmlwidgets::saveWidget(as_widget(p4), "Line3DFundValuesDiff.html")
 endTime <- Sys.time() # calulating the ending time
 totalTime <- endTime - startTime #calulating the total time
 print(totalTime) # printing the total time
-#new testing please delete

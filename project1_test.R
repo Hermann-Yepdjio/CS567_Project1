@@ -225,14 +225,13 @@ money <- sum(bDataFrame$NetSinglePremium)
 earnInterest <- vector(mode="numeric", length=(nYears+1))
 earnInterest[1] <- money*investmentInterest
 benefitPayment <- vector(mode="integer", length=(nYears+1))
-reservePayment <- vector(mode="numeric", length=(nYears+1))
+reserveHold <- vector(mode="numeric", length=(nYears+1))
 
 
 #----part of project 2, calculating reserve------
 nrowbDataFrame <- nrow(bDataFrame)
 reserveTable <- data.frame(matrix(ncol = 3, nrow = nYears))
 colnames(reserveTable) <- c("SurviveYears", "Reserve", "NumberPolicies")
-
 
 for (reserveYear in 1:nYears){
   counter<-0
@@ -243,9 +242,15 @@ for (reserveYear in 1:nYears){
       counter <- counter + 1 
       #t_V = 1 - a_(x+t)/a_x
       x <- bDataFrame$Age[i]
-      a_x <- lifeTable[lifeTable$ages == x, c("a_x")]
-      a_x_t <- lifeTable[lifeTable$ages == (x+reserveYear), c("a_x")]
-      t_V <- 1 - (a_x_t/a_x)
+      #a_x <- lifeTable[lifeTable$ages == x, c("a_x")]
+      #a_x <- lifeTable$a_x[(x+1)] # faster
+      #a_x_t <- lifeTable[lifeTable$ages == (x+reserveYear), c("a_x")]
+      #a_x_t <- lifeTable$a_x[(x+1+reserveYear)] # faster
+      #t_V <- 1 - (a_x_t/a_x)
+      #A_x_t <- lifeTable[lifeTable$ages == (x+reserveYear), c("A_x")]
+      A_x_t <- lifeTable$A_x[(x+1+reserveYear)] # faster
+      t_V <- A_x_t
+      #A_x_t <- lifeTable$A_x[(x+1+reserveYear)]
       reserveAmount <- reserveAmount + bDataFrame$Benefit[i]*t_V
     }
   }
@@ -254,6 +259,7 @@ for (reserveYear in 1:nYears){
   reserveTable$Reserve[reserveYear] <- reserveAmount
   
 }
+
 
 #-----end calculating reserve--------------------
 
@@ -270,9 +276,9 @@ if(length(payment) == 0){ #sometime there is no payment for specific year, so co
 #find reserve of the year 0
 reserve <- reserveTable[reserveTable$SurviveYears ==0, c("Reserve")]
 if(length(reserve) == 0){ #sometime there is no reserve for specific year, so convert numeric(0) to 0
-  reservePayment[1] <- 0
+  reserveHold[1] <- 0
 }else{
-  reservePayment[1] <- reserve
+  reserveHold[1] <- reserve
 }
 
 surviveYears <- vector(mode="integer", length=(nYears+1))
@@ -301,17 +307,17 @@ for (i in 1:nYears) {
   #find reserve of next year
   reserve <- reserveTable[reserveTable$SurviveYears == i, c("Reserve")]
   if(length(reserve) == 0){ #sometime there is no reserve for specific year, so convert numeric(0) to 0
-    reservePayment[i+1] <- 0
+    reserveHold[i+1] <- 0
   }else{
-    reservePayment[i+1] <- reserve
+    reserveHold[i+1] <- reserve
   }
   
 } 
 
 #benefitPayment[i+1] <- 0 #last year payment = 0
-profitTable <- data.frame(surviveYears, money, earnInterest, benefitPayment, reservePayment)
+profitTable <- data.frame(surviveYears, money, earnInterest, benefitPayment, reserveHold)
 #calculate  profit
-profitTable$profit <- profitTable$money + profitTable$earnInterest - profitTable$benefitPayment - profitTable$reservePayment
+profitTable$profit <- profitTable$money + profitTable$earnInterest - profitTable$benefitPayment - profitTable$reserveHold
 
 #----------end calculating profit table--------
 

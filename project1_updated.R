@@ -1,3 +1,14 @@
+#------------------------------------------------------------------------------------#
+#                                  Life Inurance Project                             #
+#                               Central Washington University                        #
+#                            Graduate School of Computer Science                     #
+#                          Chao Huang, Hermann Yepdjio, Lubna Alzamil                #      
+#                                      Supervised By                                 #
+#                               Professor Donald Davendra                            #
+#                                            &                                       #
+#                               Professor Chin-Mei Chuen                             #
+#------------------------------------------------------------------------------------#
+
 #setwd("C:/Users/huanglinc/Desktop/Project1 Statistics/github/CS567_Project1")
 setwd("C:/Users/huanglinc/Desktop/P2 Sta/CS567_Project1")
 #setwd("C:/Users/chao_/Desktop/CWU/Courses/Q1 Winter 2019/CS567 Computational Statistics R/Project1/Project1 Github/CS567_Project1")
@@ -12,8 +23,10 @@ source("life_table.R")
 #install library if not exist
 if (!require(ggplot2)) install.packages('ggplot2')
 if (!require(reshape)) install.packages('reshape')
+if (!require(plotly)) install.packages('plotly')
 library(ggplot2)
 library(reshape)
+library(plotly)
 x11()
 
 myGraph <- ggplot(lifeTable, aes(ages, A_x))
@@ -306,21 +319,47 @@ bDataFrame$SurviveYears <- bDataFrame$Die - bDataFrame$Age
 #write.csv(bDataFrame, file="BusinessData.csv",  append = FALSE) # creating the CSV file, each time we run the code new file will be created and the older file will be replaced 
 write.table(bDataFrame, file="BusinessData.csv", row.names=F, col.names=T, append=F, sep=",")
 
-
+#-----------------------------------------------------------
 paymentTable <- bDataFrame[c("SurviveYears", "Benefit")]
-paymentTable <- aggregate(. ~SurviveYears, data=paymentTable, sum, na.rm = TRUE)
-
+paymentTable <- aggregate(. ~SurviveYears, data=paymentTable, sum, na.rm = TRUE) #group sum, this part can be improve creating own code for grouping and put 0 in the year without payment
 investmentInterest <- as.numeric(inputsProject1[inputsProject1$label == "investmentInterest", c("value")])
-
 nYears <- max(paymentTable$SurviveYears)
-
 money <- sum(bDataFrame$NetSinglePremium)
 earnInterest <- vector(mode="numeric", length=(nYears+1))
 earnInterest[1] <- money*investmentInterest
-
-
-
 benefitPayment <- vector(mode="integer", length=(nYears+1))
+reserveHold <- vector(mode="numeric", length=(nYears+1))
+
+#----part of project 2, calculating reserve------ convert this part  to c
+nrowbDataFrame <- nrow(bDataFrame)
+reserveTable <- data.frame(matrix(ncol = 3, nrow = nYears))
+colnames(reserveTable) <- c("SurviveYears", "Reserve", "NumberPolicies")
+
+for (reserveYear in 1:nYears){
+  counter<-0
+  reserveAmount <- 0
+  for (i in 1:nrowbDataFrame){
+    if (bDataFrame$SurviveYears[i] >= reserveYear)
+    {
+      counter <- counter + 1 
+      x <- bDataFrame$Age[i]
+      A_x_t <- lifeTable$A_x[(x+1+reserveYear)] # faster
+      t_V <- A_x_t
+      reserveAmount <- reserveAmount + bDataFrame$Benefit[i]*t_V
+    }
+  }
+  reserveTable$SurviveYears[reserveYear] <- reserveYear-1
+  reserveTable$NumberPolicies[reserveYear] <- counter
+  reserveTable$Reserve[reserveYear] <- reserveAmount
+  
+}
+
+
+#-----end calculating reserve--------------------
+
+
+
+#---------calculating profit table---------------project2: reserve added----
 #find payment of the year 0
 payment <- paymentTable[paymentTable$SurviveYears == 0, c("Benefit")] 
 if(length(payment) == 0){ #sometime there is no payment for specific year, so convert numeric(0) to 0
@@ -328,18 +367,25 @@ if(length(payment) == 0){ #sometime there is no payment for specific year, so co
 }else{
   benefitPayment[1] <- payment
 }
+#find reserve of the year 0
+reserve <- reserveTable[reserveTable$SurviveYears ==0, c("Reserve")]
+if(length(reserve) == 0){ #sometime there is no reserve for specific year, so convert numeric(0) to 0
+  reserveHold[1] <- 0
+}else{
+  reserveHold[1] <- reserve
+}
 
 surviveYears <- vector(mode="integer", length=(nYears+1))
 surviveYears[1] <- 0
 
 for (i in 1:nYears) {
   surviveYears[i+1] <- i
-  
-  money[i+1] <- money[i] + earnInterest[i] - benefitPayment[i]
+  money[i+1] <- money[i] + earnInterest[i] - benefitPayment[i] 
   
   if(money[i+1] > 0){ #only calculate earnInterest when money > 0
     earnInterest[i+1] <- money[i+1]*investmentInterest
-  }else {
+  }
+  else {
     earnInterest[i+1] <- 0
   }
   
@@ -347,13 +393,28 @@ for (i in 1:nYears) {
   payment <- paymentTable[paymentTable$SurviveYears == i, c("Benefit")] 
   if(length(payment) == 0){ #sometime there is no payment for specific year, so convert numeric(0) to 0
     benefitPayment[i+1] <- 0
-  }else{
+  }
+  else{
     benefitPayment[i+1] <- payment
   }
   
-}
+  #find reserve of next year
+  reserve <- reserveTable[reserveTable$SurviveYears == i, c("Reserve")]
+  if(length(reserve) == 0){ #sometime there is no reserve for specific year, so convert numeric(0) to 0
+    reserveHold[i+1] <- 0
+  }else{
+    reserveHold[i+1] <- reserve
+  }
+  
+} 
+
 #benefitPayment[i+1] <- 0 #last year payment = 0
-profitTable <- data.frame(surviveYears, money, earnInterest, benefitPayment)
+profitTable <- data.frame(surviveYears, money, earnInterest, benefitPayment, reserveHold)
+#calculate  profit
+profitTable$profit <- profitTable$money + profitTable$earnInterest - profitTable$benefitPayment - profitTable$reserveHold
+
+#----------end calculating profit table--------
+
 
 # -------------- print business data frame -------------------------------
 x11()
@@ -391,8 +452,13 @@ ggsave(filename = "images/Random Survive Years Histogram.png", plot = myGraph)
 meltProfitTable <- melt(profitTable, id="surviveYears")
 x11()
 myGraph <- ggplot(meltProfitTable, aes(x = surviveYears, y = value, colour = variable))
-myGraph <- myGraph + geom_point() + labs(title="Company Profit Graph", y = "Money [$US]") + geom_line(linetype = "dashed") +
-  scale_color_manual(labels = c("Profit", "Interest", "Payment"), values = c("Green","blue", "red")) 
+myGraph <- myGraph + 
+  geom_point() + 
+  labs(title="Company Profit Graph", y = "Money [$US]") + 
+  geom_line(linetype = "dashed") +
+  scale_color_manual(labels = c("Fund", "Interest", "Payment", "Reserve", "Profit"), 
+                     values = c("yellow","blue", "red", "purple", "green")) 
+myGraph <- myGraph +theme(plot.title = element_text(hjust = 0.5))
 print(myGraph)
 
 ggsave(filename = "images/Company Profit Graph.png", plot = myGraph)
@@ -410,6 +476,80 @@ ggsave(filename = "images/Company Profit Graph.png", plot = myGraph)
 
 
 #----------------------------------
+
+###############Function calculate profit project2###################
+
+CalculateProfit <- function(investmentInterest){
+  #---------calculating profit table---------------project2: reserve added----
+  tTimes <- length(profitTable$surviveYears)
+  #initialized array
+  fundValues <- vector(mode="numeric", length=tTimes)
+  interest <- vector(mode="numeric", length=tTimes)
+  
+  #data for year 0
+  year <- profitTable$surviveYears
+  fundValues[1] <- profitTable$money[1]
+  interest[1] <- fundValues[1] * investmentInterest # only calculate the interest
+  benefitPay <- profitTable$benefitPayment
+  reserveHold <- profitTable$reserveHold
+  
+  for (i in 1:(tTimes-1)) {
+    fundValues[i+1] <- fundValues[i] + interest[i] - benefitPay[i]
+    if(fundValues[i+1] > 0){ #only calculate Interest when fund > 0
+      interest[i+1] <- fundValues[i+1]*investmentInterest
+    }
+    else {
+      interest[i+1] <- 0
+    }
+  }
+  
+  pT <- data.frame(year,fundValues, interest, benefitPay, reserveHold) 
+  pT$profit <- pT$fundValues + pT$interest - pT$benefitPay - pT$reserveHold
+  
+  return(pT)
+}
+
+##############end calculate profit project2#################
+
+#-------surface plot of profit----------------
+interestSeq <- seq(0.05, 0.053, 0.0005)
+yearSeq <- profitTable$surviveYears
+matrixProfit <- matrix(, nrow = length(yearSeq), ncol = length(interestSeq)) # empty matrix
+column <- 1
+
+for (i in interestSeq){
+  matrixProfit[,column] <- CalculateProfit(i)$profit
+  column <- column + 1
+}
+
+
+p <- plot_ly(x = interestSeq  , y = yearSeq, z = matrixProfit)  %>%
+  layout(
+    title = "Profit Evolution based on different Interest",
+    scene = list(
+      xaxis = list(title = "Investment Interests"),
+      yaxis = list(title = "Years"),
+      zaxis = list(title = "Profit [$US]")
+    )) %>% 
+  add_surface(
+    contours = list(
+      z = list(
+        show=TRUE,
+        usecolormap=TRUE,
+        highlightcolor="#ff0000",
+        project=list(z=TRUE)
+      )
+    )
+  ) %>%
+  layout(
+    scene = list(
+      camera=list(
+        eye = list(x=1.87, y=0.88, z=-0.64)
+      )
+    )
+  )
+
+print(p)
 
 
 endTime <- Sys.time() # calulating the ending time
