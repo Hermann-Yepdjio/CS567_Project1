@@ -13,7 +13,8 @@
 #setwd("/media/hermann/Tonpi/tonpi/Collegecourses/CWU/Graduate School/Winter 2019/CS 567/Projects/Project1/3R")
 #setwd("C:\\Users\\Lubna\\Desktop\\CWU\\Winter2019\\Stat\\ProjectOneTwo\\CS567_Project1")
 #setwd("C:/Users/chao_/Desktop/CWU/Courses/Q1 Winter 2019/CS567 Computational Statistics R/Project2/CS567_Project1")
-setwd("C:/Users/huanglinc/Desktop/P2 Sta/CS567_Project1")
+#setwd("C:/Users/huanglinc/Desktop/P2 Sta/CS567_Project1")
+setwd("D:/tonpi/Collegecourses/CWU/Graduate-School/Winter 2019/CS 567/Projects/final/CS567_Project1")
 inputsProject1 <- read.delim("project1_inputs.txt", header = TRUE, sep = "\t", dec = ".", stringsAsFactors=FALSE) #read the inputs values from the project1_inputs.txt file
 print (inputsProject1)
 #this file is to run 
@@ -180,7 +181,7 @@ lifeTableAges <- data.frame(Age=ages) # creating a data frame that contains the 
 
 print("---------Calculating Lifetimes-----------")
 print(paste("Number of clients: ", inputNumberClients))
-lifeTableAsVector = as.vector(lifeTable[1,], mode = 'numeric') #create a vector representation of lifeTable so I can pass it to the c function
+lifeTableAsVector = as.vector(lifeTable[1,], mode = 'numeric') #create a vector representation of lifeTable that can be passed to the c function
 for (i in 2:lifeTableTotalRow)
 {
   lifeTableAsVector = c(lifeTableAsVector, as.vector(lifeTable[i,], mode = 'numeric'))
@@ -188,12 +189,14 @@ for (i in 2:lifeTableTotalRow)
 
 #command to compile in R:  R CMD SHLIB c_code.c 
 dim = c(length(lifeTableAges$Age),length(lifeTable), length(lifeTableAges$Age)) 
-dyn.load("c_code.dll")
+print(dim)
+dyn.load("c_code.dll") #load the .dll file
 res = .C("for_loop", lifeTable=as.numeric(lifeTableAsVector), dim = as.integer(dim), bAge = as.integer(bAge), bBen=as.integer(bBen), bNps = as.numeric(bNps), bFAge = as.integer(bFAge), lifeTableAges = as.integer(lifeTableAges$Age), inputNumberClients =as.integer(inputNumberClients))
 bFAge = res$bFAge
 bAge = res$bAge
 bBen= res$bBen
 bNps= res$bNps
+dyn.unload("c_code.dll") #unload the .dll file
 
 
 bDataFrame <- data.frame(Age = bAge, Benefit = bBen, NetSinglePremium = bNps, Die = bFAge) #Creating the final dataframe
@@ -214,40 +217,63 @@ earnInterest[1] <- money*investmentInterest
 benefitPayment <- vector(mode="integer", length=(nYears+1))
 reserveHold <- vector(mode="numeric", length=(nYears+1))
 
+# reserveTableAsVector = as.vector(reserveTable[1,], mode = 'numeric') #create a vector representation of reserveTable so I can pass it to the c function
+# for (i in 2:nrow(reserveTable))
+# {
+#   reserveTableAsVector = c(reserveTableAsVector, as.vector(reserveTable[i,], mode = 'numeric'))
+# }
+
+bdfAge = bDataFrame$Age
+bdfSurviveYears = bDataFrame$SurviveYears
+bdfBenefit = bDataFrame$Benefit
+lifeTable_A_x = lifeTable$A_x
+SurviveYears<- vector(mode="integer", length=nYears) #initialize variables
+Reserve <- vector(mode="numeric", length=nYears)
+NumberPolicies<- vector(mode="integer", length=nYears)
+dim2 = c(nrow(bDataFrame), nYears)
+dyn.load("c_code_2.dll") # load the .dll file
+res2 = .C("for_loop_2", lifeTable_A_x=as.numeric(lifeTable_A_x), dim2 = as.integer(dim2), bdfAge = as.integer(bdfAge), bdfSurviveYears = as.integer(bdfSurviveYears), bdfBenefit = as.numeric(bdfBenefit), SurviveYears = as.integer(SurviveYears), Reserve = as.numeric(Reserve), NumberPolicies = as.integer(NumberPolicies))
 
 #----part of project 2, calculating reserve------ convert this part  to c
 nrowbDataFrame <- nrow(bDataFrame)
 reserveTable <- data.frame(matrix(ncol = 3, nrow = nYears))
 colnames(reserveTable) <- c("SurviveYears", "Reserve", "NumberPolicies")
+dyn.unload("c_code_2.dll") # unload the .dll file
+reserveTable$SurviveYears <- res2$SurviveYears
+reserveTable$Reserve <- res2$Reserve
+reserveTable$NumberPolicies <- res2$NumberPolicies
+print (reserveTable)
 
 
-for (reserveYear in 1:nYears){
-  counter<-0
-  reserveAmount <- 0
-  for (i in 1:nrowbDataFrame){
-    if (bDataFrame$SurviveYears[i] >= reserveYear)
-    {
-      counter <- counter + 1 
-      #t_V = 1 - a_(x+t)/a_x
-      x <- bDataFrame$Age[i]
-      A_x_t <- lifeTable$A_x[(x+1+reserveYear)] # faster
-      t_V <- A_x_t
-      reserveAmount <- reserveAmount + bDataFrame$Benefit[i]*t_V
-    }
-  }
-  reserveTable$SurviveYears[reserveYear] <- reserveYear-1
-  reserveTable$NumberPolicies[reserveYear] <- counter
-  reserveTable$Reserve[reserveYear] <- reserveAmount
-  
-}
-  
+
+# for (reserveYear in 1:nYears){
+#   counter<-0
+#   reserveAmount <- 0
+#   for (i in 1:nrowbDataFrame){
+#     if (bDataFrame$SurviveYears[i] >= reserveYear)
+#     {
+#       counter <- counter + 1
+#       #t_V = 1 - a_(x+t)/a_x
+#       x <- bDataFrame$Age[i]
+#       A_x_t <- lifeTable$A_x[(x+1+reserveYear)] # faster
+#       t_V <- A_x_t
+#       reserveAmount <- reserveAmount + bDataFrame$Benefit[i]*t_V
+#     }
+#   }
+#   reserveTable$SurviveYears[reserveYear] <- reserveYear-1
+#   reserveTable$NumberPolicies[reserveYear] <- counter
+#   reserveTable$Reserve[reserveYear] <- reserveAmount
+# 
+# }
+# print (reserveTable)
+
 #-----end calculating reserve--------------------
 
 
 
 #---------calculating profit table---------------project2: reserve added----
 #find payment of the year 0
-payment <- paymentTable[paymentTable$SurviveYears == 0, c("Benefit")] 
+payment <- paymentTable[paymentTable$SurviveYears == 0, c("Benefit")]
 if(length(payment) == 0){ #sometime there is no payment for specific year, so convert numeric(0) to 0
   benefitPayment[1] <- 0
 }else{
@@ -266,7 +292,7 @@ surviveYears[1] <- 0
 
 for (i in 1:nYears) {
   surviveYears[i+1] <- i
-  money[i+1] <- money[i] + earnInterest[i] - benefitPayment[i] 
+  money[i+1] <- money[i] + earnInterest[i] - benefitPayment[i]
 
   if(money[i+1] > 0){ #only calculate earnInterest when money > 0
     earnInterest[i+1] <- money[i+1]*investmentInterest
@@ -274,16 +300,16 @@ for (i in 1:nYears) {
   else {
     earnInterest[i+1] <- 0
   }
-  
+
   #find payment of next year
-  payment <- paymentTable[paymentTable$SurviveYears == i, c("Benefit")] 
+  payment <- paymentTable[paymentTable$SurviveYears == i, c("Benefit")]
   if(length(payment) == 0){ #sometime there is no payment for specific year, so convert numeric(0) to 0
     benefitPayment[i+1] <- 0
   }
   else{
     benefitPayment[i+1] <- payment
   }
-  
+
   #find reserve of next year
   reserve <- reserveTable[reserveTable$SurviveYears == i, c("Reserve")]
   if(length(reserve) == 0){ #sometime there is no reserve for specific year, so convert numeric(0) to 0
@@ -291,8 +317,8 @@ for (i in 1:nYears) {
   }else{
     reserveHold[i+1] <- reserve
   }
-  
-} 
+
+}
 
 #benefitPayment[i+1] <- 0 #last year payment = 0
 profitTable <- data.frame(surviveYears, money, earnInterest, benefitPayment, reserveHold)
@@ -305,8 +331,8 @@ profitTable$profit <- profitTable$money + profitTable$earnInterest - profitTable
 # -------------- Plot business data frame -------------------------------
 x11()
 myGraph <- ggplot(bDataFrame, aes(Age))
-myGraph <- myGraph + 
-           geom_histogram(binwidth=1, colour="black", fill="white") + 
+myGraph <- myGraph +
+           geom_histogram(binwidth=1, colour="black", fill="white") +
            labs(title = "Random Ages Histogram") +
            theme(plot.title = element_text(hjust = 0.5))
 print(myGraph)
@@ -314,7 +340,7 @@ ggsave(filename = "images/Random Ages Histogram.png", plot = myGraph)
 
 x11()
 myGraph <- ggplot(bDataFrame, aes(Benefit))
-myGraph <- myGraph + 
+myGraph <- myGraph +
            geom_histogram(colour="black", fill="white") + labs(title = "Random Benefit Histogram") +
            theme(plot.title = element_text(hjust = 0.5))
 print(myGraph)
@@ -331,9 +357,9 @@ ggsave(filename = "images/Random Net Single Premium Histogram.png", plot = myGra
 
 x11()
 myGraph <- ggplot(bDataFrame, aes(Die))
-myGraph <- myGraph + 
-           geom_histogram(binwidth=1, colour="black", fill="white") + 
-           labs(title = "Random Death Ages Histogram") + 
+myGraph <- myGraph +
+           geom_histogram(binwidth=1, colour="black", fill="white") +
+           labs(title = "Random Death Ages Histogram") +
            xlab("Death Age")+
            theme(plot.title = element_text(hjust = 0.5))
 
@@ -343,7 +369,7 @@ ggsave(filename = "images/Random Dead Ages Histogram.png", plot = myGraph)
 x11()
 myGraph <- ggplot(bDataFrame, aes(SurviveYears))
 myGraph <- myGraph +
-           geom_histogram(binwidth=1, colour="black", fill="white") + 
+           geom_histogram(binwidth=1, colour="black", fill="white") +
            labs(title = "Random Survive Years Histogram") +
            theme(plot.title = element_text(hjust = 0.5))
 print(myGraph)
@@ -354,12 +380,12 @@ ggsave(filename = "images/Random Survive Years Histogram.png", plot = myGraph)
 meltProfitTable <- melt(profitTable, id="surviveYears")
 x11()
 myGraph <- ggplot(meltProfitTable, aes(x = surviveYears, y = value, colour = variable))
-myGraph <- myGraph + 
-           geom_point() + 
-           labs(title="Company Profit Graph", y = "Money [$US]") + 
+myGraph <- myGraph +
+           geom_point() +
+           labs(title="Company Profit Graph", y = "Money [$US]") +
            geom_line(linetype = "dashed") +
-           scale_color_manual(labels = c("Fund", "Interest", "Payment", "Reserve", "Profit"), 
-           values = c("yellow","blue", "red", "purple", "green")) 
+           scale_color_manual(labels = c("Fund", "Interest", "Payment", "Reserve", "Profit"),
+           values = c("yellow","blue", "red", "purple", "green"))
 myGraph <- myGraph +theme(plot.title = element_text(hjust = 0.5))
 print(myGraph)
 ggsave(filename = "images/Company Profit Graph.png", plot = myGraph)
@@ -370,7 +396,7 @@ ggsave(filename = "images/Company Profit Graph.png", plot = myGraph)
 # F(t)= Premium (t)+ accumlatedMonthlyinterest(t)- benefit(t)
 tTimes <- length(profitTable$surviveYears)
 # calucalting the monthy interest by A=p*((1+(annual interest/12))^(12*i)) - from the web
-# or by calucalting the monthy interest by 1+((i)^12)/12  -given in the class 
+# or by calucalting the monthy interest by 1+((i)^12)/12  -given in the class
 
 #initialized array
 fundValues <- vector(mode="numeric", length=tTimes)
@@ -382,22 +408,22 @@ year <- profitTable$surviveYears
 fundValues[1] <- profitTable$money[1]
 interestMonthBased[1] <- fundValues[1] * (1+investmentInterest/12)^12 - fundValues[1] # only calculate the interest
 benefitPay <- profitTable$benefitPayment
-accInterMonthBased[1] <- interestMonthBased[1] 
+accInterMonthBased[1] <- interestMonthBased[1]
 accBenPay[1]<- benefitPay[1]
 
 for (i in 1:(tTimes-1)) {
-  
+
   fundValues[i+1] <- fundValues[i] + interestMonthBased[i] - benefitPay[i]
-  
+
   if(fundValues[i+1] > 0){ #only calculate Interest when fund > 0
-    interestMonthBased[i+1] <- fundValues[i+1] * (1+investmentInterest/12)^12 - fundValues[i+1] 
+    interestMonthBased[i+1] <- fundValues[i+1] * (1+investmentInterest/12)^12 - fundValues[i+1]
   }
   else {
     interestMonthBased[i+1] <- 0
   }
   accInterMonthBased[i+1] <- accInterMonthBased[i] +  interestMonthBased[i+1]
   accBenPay[i+1] <- accBenPay[i] +  benefitPay[i+1]
-  
+
 }
 # Now, claulating the Fund value, F(t)= Premium (t)+ accumlatedMonthlyinterest(t)- benefit(t)
 
@@ -409,8 +435,8 @@ fundValueTable<-data.frame(year,fundValues, interestMonthBased, benefitPay, accI
 meltFundValueTable <- melt(fundValueTable, id="year")
 x11()
 myGraph <- ggplot(meltFundValueTable, aes(x = year, y = value, colour = variable))
-myGraph <- myGraph + 
-           geom_point() + 
+myGraph <- myGraph +
+           geom_point() +
            labs(title="Company Fund Graph", y = "Money [$US]") +
            geom_line(linetype = "dashed") +
            scale_color_manual(labels = c("Fund", "Interest Month based", "Benefit Payment", "Accumulated Interest", "Accumulated Benefit Payment"),
@@ -446,20 +472,20 @@ CalculateFundValue <- function(investmentInterest){
   interestMonthBased[1] <- fundValues[1] * (1+investmentInterest/12)^12 - fundValues[1] # only calculate the interest
   benefitPay <- profitTable$benefitPayment
 
-  
+
   for (i in 1:(tTimes-1)) {
     fundValues[i+1] <- fundValues[i] + interestMonthBased[i] - benefitPay[i]
     if(fundValues[i+1] > 0){ #only calculate Interest when fund > 0
-      interestMonthBased[i+1] <- fundValues[i+1] * (1+investmentInterest/12)^12 - fundValues[i+1] 
+      interestMonthBased[i+1] <- fundValues[i+1] * (1+investmentInterest/12)^12 - fundValues[i+1]
     }
     else {
       interestMonthBased[i+1] <- 0
     }
   }
-  
-  fT <- data.frame(year,fundValues, interestMonthBased, benefitPay) 
+
+  fT <- data.frame(year,fundValues, interestMonthBased, benefitPay)
   return(fT)
-  
+
 }
 
 ###############Function calculate profit project2###################
@@ -470,14 +496,14 @@ CalculateProfit <- function(investmentInterest){
   #initialized array
   fundValues <- vector(mode="numeric", length=tTimes)
   interest <- vector(mode="numeric", length=tTimes)
-  
+
   #data for year 0
   year <- profitTable$surviveYears
   fundValues[1] <- profitTable$money[1]
   interest[1] <- fundValues[1] * investmentInterest # only calculate the interest
   benefitPay <- profitTable$benefitPayment
   reserveHold <- profitTable$reserveHold
-  
+
   for (i in 1:(tTimes-1)) {
     fundValues[i+1] <- fundValues[i] + interest[i] - benefitPay[i]
     if(fundValues[i+1] > 0){ #only calculate Interest when fund > 0
@@ -487,8 +513,8 @@ CalculateProfit <- function(investmentInterest){
       interest[i+1] <- 0
     }
   }
-  
-  pT <- data.frame(year,fundValues, interest, benefitPay, reserveHold) 
+
+  pT <- data.frame(year,fundValues, interest, benefitPay, reserveHold)
   pT$profit <- pT$fundValues + pT$interest - pT$benefitPay - pT$reserveHold
 
   return(pT)
@@ -516,7 +542,7 @@ p <- plot_ly(x = interestSeq  , y = yearSeq, z = matrixFund)  %>%
       xaxis = list(title = "Monthly Interests"),
       yaxis = list(title = "Years"),
       zaxis = list(title = "Fund [$US]")
-    )) %>% 
+    )) %>%
   add_surface(
     contours = list(
       z = list(
@@ -557,12 +583,12 @@ for (i in interestSeq){
 
 df$interest <- as.factor(df$interest)
 
-p <- plot_ly(df, 
-             x = ~year, 
-             y = ~fundValues, 
-             z = ~interest, 
-             type = 'scatter3d', 
-             mode = 'lines', 
+p <- plot_ly(df,
+             x = ~year,
+             y = ~fundValues,
+             z = ~interest,
+             type = 'scatter3d',
+             mode = 'lines',
              color = ~interest,
              line = list(width = 4)
              )
@@ -589,7 +615,7 @@ p <- plot_ly(x = interestSeq  , y = yearSeq, z = matrixProfit)  %>%
       xaxis = list(title = "Interests"),
       yaxis = list(title = "Years"),
       zaxis = list(title = "Profit [$US]")
-    )) %>% 
+    )) %>%
   add_surface(
     contours = list(
       z = list(
@@ -614,16 +640,16 @@ htmlwidgets::saveWidget(as_widget(p), "Surface3DProfitValues.html")
 
 #-------end line plot----------------------
 
-# p5 <- plot_ly(df, 
-#               x = ~year, 
-#               y = ~fundValues, 
-#               z = ~interest, 
-#               type = 'scatter3d', 
-#               mode = 'markers', 
+# p5 <- plot_ly(df,
+#               x = ~year,
+#               y = ~fundValues,
+#               z = ~interest,
+#               type = 'scatter3d',
+#               mode = 'markers',
 #               color = ~interest,
 #               marker = list(size = 3, symbol = 104)
 #               )
-# 
+#
 # print(p5)
 # htmlwidgets::saveWidget(as_widget(p5), "marker3DFundValuesDiff.html")
 
