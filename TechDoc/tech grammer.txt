@@ -1,0 +1,1 @@
+This our first project. We've been asked to implement the formulas used by life insurance companies using R programming language. Implementing the formulas into the computer will make it easier and more efficient to calculate and visualize several types of products offered by the insurance company
