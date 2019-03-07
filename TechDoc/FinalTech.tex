@@ -131,7 +131,7 @@ This project implements the formulas used by life insurance companies using the 
 The data used is a mortality data taken from the Society of Actuaries Mortality Tables. The mortality data was downloaded and saved as a CSV file called compare.csv.  All the equations were coded in an R file called life-table.R.  The user can specify the inputs by editing life-table-inputs.txt. The life-table .R reads the data from the life-table-inputs.txt file and outputs the result. The project also simulates the production of life insurance policies for 10000 clients.  The process takes place in project1-updated.R file. Additionally, the code calculates the profit and the fund value that the company earns depending on the interests and the benefits paid. Furthermore, the code generates plots of a variety of variables that will help the company to visualize the results of the calculations.
 \section{The Code}
 \subsection{Life-table.R}
-\begin{lstlisting}[caption={ Reading The Data Part 1},captionpos=b]
+\begin{lstlisting}[caption={ Reading The Data Part 1},captionpos=b,label={list:LOne}]
 startTime <- Sys.time()
 setwd("/media/hermann/Tonpi/tonpi/Collegecourses/CWU/Graduate School/Winter 2019/CS 567/Projects/Project1/3R")
 inputs <- read.table("life_table_inputs.txt", header = TRUE, sep = "\t", dec = ".", stringsAsFactors=FALSE) #read the inputs values from the life_table_inputs.txt file
@@ -141,8 +141,8 @@ data <- read.csv(inputMortalityFile, header = TRUE, stringsAsFactors=FALSE) #avo
 dataTotalRow <- nrow(data)
 beginRowData = 1
 \end{lstlisting}
-In Listing 1, Line 1 stores the start time when the code is started to execute. At the end of code execution, the total time will be printed. Line 2 sets the working directory. Line 3 reads the inputs values from the life-table-inputs.txt file and store them in \textit{inputs}. Line 4 gets the value of inputMortalityFile row from \textit{inputs} data frame which is compare.csv and stores it in \textit{inputMortalityFile}.Line 5 prints the value of \textit{inputMortalityFile}. Line 6 reads the csv data of inputMortalityFile and store them in \textit{data}. stringsAsFactors=FALSE means that do not covert the string data to factors. Line 7 counts the number of rows in \textit{data}.
-\begin{lstlisting}[caption={ Reading The Data Part 2},captionpos=b]
+In Listing \ref{list:LOne}, Line 1 stores the start time when the code is started to execute. At the end of code execution, the total time will be printed. Line 2 sets the working directory. Line 3 reads the inputs values from the life-table-inputs.txt file and store them in \textit{inputs}. Line 4 gets the value of inputMortalityFile row from \textit{inputs} data frame which is compare.csv and stores it in \textit{inputMortalityFile}.Line 5 prints the value of \textit{inputMortalityFile}. Line 6 reads the csv data of inputMortalityFile and store them in \textit{data}. stringsAsFactors=FALSE means that do not covert the string data to factors. Line 7 counts the number of rows in \textit{data}.
+\begin{lstlisting}[caption={ Reading The Data Part 2},captionpos=b,label={list:L2}]
 ages = as.numeric(data[beginRowData:dataTotalRow, 1])
 mortality = as.numeric(data[beginRowData:dataTotalRow, 2])
 
@@ -153,10 +153,10 @@ lifeTable$t <- lifeTable$ages + 1
 lifeTable$q <- lifeTable$mortality
 lifeTable$p <- 1 - lifeTable$q
 \end{lstlisting}
-in Listing 2, line 1 starts to loop inside the first column (ages column) of\textit{data} data frame from 1 until the total rows of \textit{data} then convert the ages into numeric values and store them in \textit{ages}. Line 2 does the same with the second column ,which contains the mortality, storing them as numeric values in \textit{mortality}. Line 4 creates a data frame called \textit{lifeTable} which contains for now two columns \textit{ages} and \textit{mortality}. Line 6 counts the number of rows in \textit{lifeTable} and store them in \textit{lifeTableTotalRow}. Line 7 adds new column to the data frame \textit{lifeTable} the column is called \textit{t} and contains the values ages+1. Line 8 adds new column to the data frame \textit{lifeTable} the column is called \textit{q} and contains the same data as \textit{mortality} column. Line 9 as well adds new column to the data frame \textit{lifeTable} the column is called \textit{p} and contains the values of 1-\textit{q}.
+in Listing \ref{list:L2}, line 1 starts to loop inside the first column (ages column) of\textit{data} data frame from 1 until the total rows of \textit{data} then convert the ages into numeric values and store them in \textit{ages}. Line 2 does the same with the second column ,which contains the mortality, storing them as numeric values in \textit{mortality}. Line 4 creates a data frame called \textit{lifeTable} which contains for now two columns \textit{ages} and \textit{mortality}. Line 6 counts the number of rows in \textit{lifeTable} and store them in \textit{lifeTableTotalRow}. Line 7 adds new column to the data frame \textit{lifeTable} the column is called \textit{t} and contains the values ages+1. Line 8 adds new column to the data frame \textit{lifeTable} the column is called \textit{q} and contains the same data as \textit{mortality} column. Line 9 as well adds new column to the data frame \textit{lifeTable} the column is called \textit{p} and contains the values of 1-\textit{q}.
 \pagebreak
 \StartLineAtOne
-\begin{lstlisting} [caption={ Imeplemening The Equations Part 1},captionpos=b]
+\begin{lstlisting} [caption={ Imeplemening The Equations Part 1},captionpos=b,label={list:L3}]
 #calculate v^t
 interest <- as.numeric(inputs[inputs$label == "interest", c("value")])
 lifeTable$vt <- 1/(1+interest)^lifeTable$t
@@ -167,7 +167,7 @@ for (i in 2:lifeTableTotalRow) {
 lifeTable$t_p_x0[i] <- lifeTable$t_p_x0[i-1] *  lifeTable$p[i]
 }
 \end{lstlisting}
-In Listing 3, lines 1 gets the value of interest from \textit{inputs} and stores it in \textit{interest}. Line 2 add new column to the data frame \textit{lifeTable} the column is called $v^{t}$ which contains the value of equation 1 . Lines 6-8 add new column to the data frame \textit{lifeTable} the column is called $_{t}P_{x0}$ and contains the value of equation 2.
+In Listing \ref{list:L3}, lines 1 gets the value of interest from \textit{inputs} and stores it in \textit{interest}. Line 2 add new column to the data frame \textit{lifeTable} the column is called $v^{t}$ which contains the value of equation 1 . Lines 6-8 add new column to the data frame \textit{lifeTable} the column is called $_{t}P_{x0}$ and contains the value of equation 2.
 
 \begin{equation}
 v^t=(1+i)^{-t}
@@ -179,7 +179,7 @@ v^t=(1+i)^{-t}
 \end{equation}
 
 \StartLineAtOne
-\begin{lstlisting}[caption={Imeplemening The Equations Part 2},captionpos=b]
+\begin{lstlisting}[caption={Imeplemening The Equations Part 2},captionpos=b,label={list:L4}]
 #calculate t_E_x | x=0
 lifeTable$t_E_x0 <- lifeTable$vt * lifeTable$t_p_x0
 
@@ -193,12 +193,12 @@ lifeTable$a_x[i] <- 1 + sum(lifeTable$t_E_x0[i:lifeTableTotalRow])/lifeTable$t_E
 d = interest/(1 + interest)
 lifeTable$A_x <- 1 - d * lifeTable$a_x
 \end{lstlisting}
-In Listing 4, line 2 adds new column to the data frame \textit{lifeTable} the column is called $_{t}E_{x0}$ and contains the value $_{t}E_{x}=v^t$ *  $_{t}p_{x0}$. Lines 5-7 add new column to the data frame \textit{lifeTable} the column is called $ax$ and its values are $ax=1+\Sigma _{t}E_{x}$.The first value in  $ax$ column is$=1+\Sigma _{t}E_{x0}$. Lines 11-12 add new column to the data frame \textit{lifeTable} the column is called $A_{x}$ and contains the value of $A_{x}=1-d$ * $ax$.
+In Listing \ref{list:L4}, line 2 adds new column to the data frame \textit{lifeTable} the column is called $_{t}E_{x0}$ and contains the value $_{t}E_{x}=v^t$ *  $_{t}p_{x0}$. Lines 5-7 add new column to the data frame \textit{lifeTable} the column is called $ax$ and its values are $ax=1+\Sigma _{t}E_{x}$.The first value in  $ax$ column is$=1+\Sigma _{t}E_{x0}$. Lines 11-12 add new column to the data frame \textit{lifeTable} the column is called $A_{x}$ and contains the value of $A_{x}=1-d$ * $ax$.
 
 \subsection{Projec1.R}
 \hspace{1 cm}In this file, we are calling the formulas located in life-table.R using the source function.
 \StartLineAtOne
-\begin{lstlisting}[caption={ The Relationship between $A_{x}$ and Ages},captionpos=b]
+\begin{lstlisting}[caption={ The Relationship between $A_{x}$ and Ages},captionpos=b,label={list:L5}]
 setwd(C://Desktop//Statis//GroupProject1//3R)
 inputsProject1 <- read.delim("project1_inputs.txt", header = TRUE, sep = "\t", dec = ".", stringsAsFactors=FALSE) #read the inputs values from the project1_inputs.txt file
 print (inputsProject1)
@@ -217,7 +217,7 @@ ggsave(filename = "images/A_x Vs Ages.png", plot = myGraph)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-In Listing 5, line 1 sets the working directory to the path of where the project and needed files are stored . Line 2 reads the inputs values from the project1-inputs.txt file and stores them in \textit{inputsProject1}. Line 3 prints the values in \textit{inputsProject1}. Line 4 calls Life-table.R file that contains the necessary formulas. Line 5-6  install the needed packages and call them with library function . Here we are calling ggplot2 and reshape libries in lines 8-9. Reshape library  is used to cast a data frame into the reshaped form. The library ggplot2 is used for creating plots. Line 10 opens a new graph window before creating a new graph to avoid overwriting of previous plotted graphs. X11() function is used in Unix platform, windows() is used in Windows platform and quartz() is used in Mac platform. Line 11 myGraph contains plots the \textit{ages} and $A_{x}$ cloumns from \textit{lifeTable} data frame. Line 12 geom point function is used to create scatter points displaying the relationship between \textit{ages} and $A_{x}$. Line 13 shows the plot on the screen. Line 14 saves the plot on images folder. Figure 1 shows the result of Line 12.
+In Listing \ref{list:L5}, line 1 sets the working directory to the path of where the project and needed files are stored . Line 2 reads the inputs values from the project1-inputs.txt file and stores them in \textit{inputsProject1}. Line 3 prints the values in \textit{inputsProject1}. Line 4 calls Life-table.R file that contains the necessary formulas. Line 5-6  install the needed packages and call them with library function . Here we are calling ggplot2 and reshape libries in lines 8-9. Reshape library  is used to cast a data frame into the reshaped form. The library ggplot2 is used for creating plots. Line 10 opens a new graph window before creating a new graph to avoid overwriting of previous plotted graphs. X11() function is used in Unix platform, windows() is used in Windows platform and quartz() is used in Mac platform. Line 11 myGraph contains plots the \textit{ages} and $A_{x}$ cloumns from \textit{lifeTable} data frame. Line 12 geom point function is used to create scatter points displaying the relationship between \textit{ages} and $A_{x}$. Line 13 shows the plot on the screen. Line 14 saves the plot on images folder. Figure 1 shows the result of Line 12.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -232,22 +232,23 @@ In Listing 5, line 1 sets the working directory to the path of where the project
 \end{figure}
 
 \StartLineAtOne
-\begin{lstlisting}[caption={ Life Net Single Premium},captionpos=b]
+\begin{lstlisting}[caption={ Life Net Single Premium},captionpos=b,label={list:L6}]
 inputAges = as.numeric(inputsProject1[inputsProject1$label == "inputAges", c("value")])
 inputBenefit = as.numeric(inputsProject1[inputsProject1$label == "inputBenefit", c("value")])
 nsp <- lifeTable[lifeTable$ages == inputAges, c("A_x")]*inputBenefit
 print(paste("input Ages: ", inputAges))
 print(paste("Whole Life Net Single Premium: ", nsp))
 \end{lstlisting}
-In Listing 6, lines 1-2 get the values of inputAges and inputBenefit columns in \textit{inputsProject1} convert them to numeric and store them in \textit{inputAges} and \textit{inputBenefit}. Line 3 extracts the corresponding $A_{x}$ of the \textit{inputAges} which is 12 and multiples it by the \textit{inputBenefit} which is 1000 storing the result in \textit{nsp}. The formula used is $Net Single Premium = Benefit$ * $A_{x}$. Line 4 prints the age. Line 5 prints the result of Net Single Premium.
+In Listing \ref{list:L6}, lines 1-2 get the values of inputAges and inputBenefit columns in \textit{inputsProject1} convert them to numeric and store them in \textit{inputAges} and \textit{inputBenefit}. Line 3 extracts the corresponding $A_{x}$ of the \textit{inputAges} which is 12 and multiples it by the \textit{inputBenefit} which is 1000 storing the result in \textit{nsp}. The formula used is $Net Single Premium = Benefit$ * $A_{x}$. Line 4 prints the age. Line 5 prints the result of Net Single Premium.
 \pagebreak
 
 
 
 %%%%%%%%%%%%%%%%%% S
+\iffalse
 \pagebreak
 \StartLineAtOne
-\begin{lstlisting}[caption={ Calculating $_{t}q_{x}$},captionpos=b]
+\begin{lstlisting}[caption={ Calculating $_{t}q_{x}$},captionpos=b ,label={list:L7}]
 CalculateFinalAgeSemiPerfectData <- function(inputAge) { #---only for testing
 
 #calculate probability of (x) lives t years  t_p_x where x = inputAges
@@ -279,14 +280,14 @@ bFAge <- sample(pCurveX$pLivesAges, inputNumberClients, replace = T, pCurveX$tl1
 return(bFAge)
 }
 \end{lstlisting}
-Listing 7 calulates the probability of (x) lives t years using the defined function CalculateFinalAgeSemiPerfectData. It finds the probablity $_{t}p_{x0}$ of \textit{inputAges - 1} and stores the result in \textit{previousAgeP}. Then checks whether the \textit{inputAges} is greater than zero or not. If it is, it will get all the probabilities $_{t}p_{x0}$ of all ages and divide by \textit{previousAgeP} and store the result in \textit{pLives}. If the \textit{inputAges} is not greater than zero, it will get all the probabilities $_{t}p_{x0}$ of all ages and store them in \textit{pLives}. Then stores all the ages that are greater than or equal to \textit{inputAges} in \textit{pLivesAges}. After that, it creates a data frame called \textit{pCurveX} that has two columns \textit{pLivesAges} and \textit{pLives}. After that, calculate $_{t1}q_{x}$ which is the probability that x survives t years and dies within 1 year. The general formula used to calculate this probability is\\ $_{u|t}q_{x}=_{u}p_{x}$ - $_{u+t}p_{x}$.  \textit{pCurveXRow} stores the number of rows in \textit{pCurveX} data frame. It iterates from 1 until \textit{pCurveXRow}-1. Adds new column to the data frame \textit{pCurveX} the column is called $_{t1}q_{x}$ and contains the values of the formula $_{u|t}q_{x}=_{u}p_{x}$ - $_{u+t}p_{x}$. Finally, it stores the $_{u|t}q_{x}$ of the last row in \textit{pCurveX} data frame.
-
+Listing \ref{list:L7} calulates the probability of (x) lives t years using the defined function CalculateFinalAgeSemiPerfectData. It finds the probablity $_{t}p_{x0}$ of \textit{inputAges - 1} and stores the result in \textit{previousAgeP}. Then checks whether the \textit{inputAges} is greater than zero or not. If it is, it will get all the probabilities $_{t}p_{x0}$ of all ages and divide by \textit{previousAgeP} and store the result in \textit{pLives}. If the \textit{inputAges} is not greater than zero, it will get all the probabilities $_{t}p_{x0}$ of all ages and store them in \textit{pLives}. Then stores all the ages that are greater than or equal to \textit{inputAges} in \textit{pLivesAges}. After that, it creates a data frame called \textit{pCurveX} that has two columns \textit{pLivesAges} and \textit{pLives}. After that, calculate $_{t1}q_{x}$ which is the probability that x survives t years and dies within 1 year. The general formula used to calculate this probability is\\ $_{u|t}q_{x}=_{u}p_{x}$ - $_{u+t}p_{x}$.  \textit{pCurveXRow} stores the number of rows in \textit{pCurveX} data frame. It iterates from 1 until \textit{pCurveXRow}-1. Adds new column to the data frame \textit{pCurveX} the column is called $_{t1}q_{x}$ and contains the values of the formula $_{u|t}q_{x}=_{u}p_{x}$ - $_{u+t}p_{x}$. Finally, it stores the $_{u|t}q_{x}$ of the last row in \textit{pCurveX} data frame.
+\fi
 
 %%%%%%%%%%%%%%%%%
 
 %%%%%%%%%%%%%%%%%%%
 \StartLineAtOne
-\begin{lstlisting}[caption={ 10000 Simulation},captionpos=b]
+\begin{lstlisting}[caption={ 10000 Simulation},captionpos=b,label={list:L8}]
 #now creating a block of 10000 people who are in different ages and want different benefits
 BussinessBlock <- function(rAge,rBenefit) { 
 netSinglePremium <- lifeTable[lifeTable$ages == rAge, c("A_x")]*rBenefit
@@ -294,14 +295,12 @@ return(netSinglePremium)
 }
 
 inputNumberClients <- as.numeric(inputsProject1[inputsProject1$label == "inputNumberClients", c("value")])
-
 bAge <- vector(mode="integer", length=inputNumberClients) #initialize variables
 bBen <- vector(mode="integer", length=inputNumberClients)
 bNps <- vector(mode="numeric", length=inputNumberClients)
 bFAge <- vector(mode="integer", length=inputNumberClients)
 maxAges <- max(lifeTable$ages)
 lifeTableAges <- lifeTable$ages[ages < maxAges]# avoid picking max ages
-
 #looping 10000
 lifeTableAges <- data.frame(Age=ages) # creating a data frame that contains the ages
 print("---------Calculating Lifetimes-----------")
@@ -321,10 +320,10 @@ bBen= res[4]$bBen
 bNps= res[5]$bNps
 \end{lstlisting}
 
-Listing 8 creates a function named \textit{\textbf{BussinessBlock}} that receives two parameters -age and benefit- and calculates  and returns the Net Single Premium according to the formula $Net Single Premium = Benefit$ * $A_{x}$. Line 7 gets the population value which is 10000 from \textit{inputsProject1} and stores it in \textit{inputNumberClients}. Lines 9-12 creates new variables (arrays) and set them to zeros with same length of \textit{inputNumberClients} for later use. Line 11 gets the maximum age from \textit{lifeTable} data frame and stores in \textit{maxAges}. Line 14 stores all the ages that are less than \textit{maxAges} in \textit{lifeTableAges}.  Line 17 stores all the ages in \textit{lifeTableAges}. The loop is made in a c code and called within R to reduce the time needed to loop over all 10000 clients.
+Listing \ref{list:L8} creates a function named \textit{\textbf{BussinessBlock}} that receives two parameters -age and benefit- and calculates  and returns the Net Single Premium according to the formula $Net Single Premium = Benefit$ * $A_{x}$. Line 7 gets the population value which is 10000 from \textit{inputsProject1} and stores it in \textit{inputNumberClients}. Lines 8-11 creates new variables (arrays) and set them to zeros with same length of \textit{inputNumberClients} for later use. Line 12 gets the maximum age from \textit{lifeTable} data frame and stores in \textit{maxAges}. Line 13 stores all the ages that are less than \textit{maxAges} in \textit{lifeTableAges}.  Line 18 stores all the ages in \textit{lifeTableAges}. The loop is made in a c code and called within R to reduce the time needed to loop over all 10000 clients.
 
 \StartLineAtOne
-\begin{lstlisting}[caption={ Business Data Frame},captionpos=b]
+\begin{lstlisting}[caption={ Business Data Frame},captionpos=b,label={list:L9}]
 bDataFrame <- data.frame(Age = bAge, Benefit = bBen, NetSinglePremium = bNps, Die = bFAge) #Creating the final dataframe
 bDataFrame$SurviveYears <- bDataFrame$Die - bDataFrame$Age
 # creating the CSV file, each time we run the code new file will be created and the older file will be replaced 
@@ -367,21 +366,21 @@ benefitPayment[i+1] <- payment
 #benefitPayment[i+1] <- 0 #last year payment = 0
 profitTable <- data.frame(surviveYears, money, earnInterest, benefitPayment)
 \end{lstlisting}
-In Listing 9, line 1 creates a data frame named \textit{bDataFrame} that contains Age, Benefit, NetSinglePremium and Die columns. Line 2 adds new column to \textit{bDataFrame}  named  \textit{SurviveYears} that contains the difference between Die and Age column. Line 4 creates the CSV file, each time we run the code new file will be created and the older file will be replaced. Lines 5-6 creates a data frame named \textit{paymentTable} that contains SurviveYears and Benefit columns from \textit{bDataFrame} data frame. After that, we are gonna calculate and see whether the insurance company makes money or loses money with interest rate of 5.00\%. Line 8 gets the interest value which is 0.05 from \textit{inputsProject1} and stores it in \textit{investmentInterest}. Line 10 sets the SurviveYear to zero which indicates the current year. Line 11 calculates the sum of NetSinglePremium column in \textit{bDataFrame} data frame and stores the result in \textit{money}. Line 12 multiplies \textit{money} with \textit{investmentInterest} and stores the result in \textit{earnInterest}.
+In Listing \ref{list:L9}, line 1 creates a data frame named \textit{bDataFrame} that contains Age, Benefit, NetSinglePremium and Die columns. Line 2 adds new column to \textit{bDataFrame}  named  \textit{SurviveYears} that contains the difference between Die and Age column. Line 4 creates the CSV file, each time we run the code new file will be created and the older file will be replaced. Lines 5-6 creates a data frame named \textit{paymentTable} that contains SurviveYears and Benefit columns from \textit{bDataFrame} data frame. After that, we are gonna calculate and see whether the insurance company makes money or loses money with interest rate of 5.00\%. Line 8 gets the interest value which is 0.05 from \textit{inputsProject1} and stores it in \textit{investmentInterest}. Line 10 sets the SurviveYear to zero which indicates the current year. Line 11 calculates the sum of NetSinglePremium column in \textit{bDataFrame} data frame and stores the result in \textit{money}. Line 12 multiplies \textit{money} with \textit{investmentInterest} and stores the result in \textit{earnInterest}.
 Lines 16-29 calculates the payment of benefits in current year. Line 16 stores the benefits paid in the current year in \textit{payment}. Lines 17-29 checks if the length of \textit{payment} is equal to zero or not. If it is , let \textit{paymentRec} be zore. Else, copy the data of \textit{payment} to \textit{paymentRec}. Lines 32-39 calculates the benefit payment of next year.
 Line 33 gets the benefit that should be paid for i survived years. Lines 34-37 checks if the payment is equal to zero or not. If it is, the benefit payment for the next year will be zero and that meas nobody died this year. Otherwise, the benefit payment for the next year will be equal to \textit{payment} that contains the benefit. Finally, Line 41 creates a data frame called \textit{profitTable} that has four columns SurviveYear, money, earnInterest and benefitPayment.
 \\
 \\
 As mentioned earlier, x11() function opens a new graph window before creating a new graph to avoid overwriting of previous plotted graphs.  The following Listings  plots the Age, Benefit, NetSinglePremium, Die and SurviveYears columns from \textit{bDataFrame}. Each of these column is plotted on its own window. All these plots are plotted as histograms. All the images will be saved in images directory which should be created on the same working directory. Each listing  will have its output graph under it.
 
-\begin{lstlisting}[caption={ Random Ages Histogram},captionpos=b]
+\begin{lstlisting}[caption={ Random Ages Histogram},captionpos=b,label={list:L10}]
 x11()
 myGraph <- ggplot(bDataFrame, aes(Age))
 myGraph <- myGraph + geom_histogram(binwidth=1, colour="black", fill="white") + labs(title = "Random Ages Histogram")
 print(myGraph)
 ggsave(filename = "images/Random Ages Histogram.png", plot = myGraph)
 \end{lstlisting}
-\pagebreak
+
 \begin{figure}[h]
 	\centering
 	\includegraphics[width=0.5\linewidth, height=5cm]{S2.png}
@@ -389,10 +388,10 @@ ggsave(filename = "images/Random Ages Histogram.png", plot = myGraph)
 	
 \end{figure}
 
+\pagebreak
 
 
-
-\begin{lstlisting}[caption={Random Benefit Histogram}]
+\begin{lstlisting}[caption={Random Benefit Histogram},label={list:L11}]
 x11()
 myGraph <- ggplot(bDataFrame, aes(Benefit))
 myGraph <- myGraph + geom_histogram(colour="black", fill="white") + labs(title = "Random Benefit Histogram")
@@ -406,8 +405,8 @@ ggsave(filename = "images/Random Benefit Histogram.png", plot = myGraph)
 	\caption{Random Benefit Histogram }
 	
 \end{figure}
-\pagebreak
-\begin{lstlisting}[caption={ Random Net Single Premium Histogram},captionpos=b]
+
+\begin{lstlisting}[caption={ Random Net Single Premium Histogram},captionpos=b,label={list:L12}]
 x11()
 myGraph <- ggplot(bDataFrame, aes(NetSinglePremium))
 myGraph <- myGraph + geom_histogram(colour="black", fill="white") + labs(title = "Random Net Single Premium Histogram")
@@ -420,8 +419,8 @@ ggsave(filename = "images/Random Net Single Premium Histogram.png", plot = myGra
 	\caption{Random Net Single Premium Histogram }
 	
 \end{figure}
-
-\begin{lstlisting}[caption={Random Death Ages Histogram},captionpos=b]
+\pagebreak
+\begin{lstlisting}[caption={Random Death Ages Histogram},captionpos=b,label={list:L13}]
 x11()
 myGraph <- ggplot(bDataFrame, aes(Die))
 myGraph <- myGraph + geom_histogram(binwidth=1, colour="black", fill="white") + labs(title = "Random Dead Ages Histogram")
@@ -435,7 +434,7 @@ ggsave(filename = "images/Random Dead Ages Histogram.png", plot = myGraph)
 	
 \end{figure}
 \pagebreak
-\begin{lstlisting}[caption={Random Survived Years Histogram},captionpos=b]
+\begin{lstlisting}[caption={Random Survived Years Histogram},captionpos=b,label={list:L14}]
 x11()
 myGraph <- ggplot(bDataFrame, aes(SurviveYears))
 myGraph <- myGraph + geom_histogram(binwidth=1, colour="black", fill="white") + labs(title = "Random Survive Years Histogram")
@@ -449,7 +448,7 @@ ggsave(filename = "images/Random Survive Years Histogram.png", plot = myGraph)
 
 \end{figure}
 \pagebreak
-\begin{lstlisting}[caption={Company Profit Graph},captionpos=b]
+\begin{lstlisting}[caption={Company Profit Graph},captionpos=b,label={list:L15}]
 #------------------- print profit graph ------------------
 meltProfitTable <- melt(profitTable, id="surviveYears")
 x11()
@@ -464,7 +463,7 @@ endTime <- Sys.time() # calulating the ending time
 totalTime <- endTime - startTime #calulating the total time
 print(totalTime) # printing the total time
 \end{lstlisting}
-In Listing 15, Line 2 uses one of the reshapes's library functions. Melt function which allows you to plot more that one thing on the same window. As mentioned earlier x11() function opens a new graph window before creating a new graph to avoid overwriting of previous plotted graphs. Line 4 sets the axis of the plot. Line 5 sets the title and the plot will be plotted as lines and sets the legend of the plot. Line 7 displays the graph on the screen. Line 9 saves the graph on images directory which should be created on the same working directory. Line 11 stores the time when the code is ended its execution. Line 12 calculates the total time . Line 13 prints the total time. Figure 7 shows the output of line 7.
+In Listing \ref{list:L15}, Line 2 uses one of the reshapes's library functions. Melt function which allows you to plot more that one thing on the same window. As mentioned earlier x11() function opens a new graph window before creating a new graph to avoid overwriting of previous plotted graphs. Line 4 sets the axis of the plot. Line 5 sets the title and the plot will be plotted as lines and sets the legend of the plot. Line 7 displays the graph on the screen. Line 9 saves the graph on images directory which should be created on the same working directory. Line 11 stores the time when the code is ended its execution. Line 12 calculates the total time . Line 13 prints the total time. Figure 7 shows the output of line 7.
 \clearpage
 \begin{figure}[h]
 	\centering
@@ -472,7 +471,7 @@ In Listing 15, Line 2 uses one of the reshapes's library functions. Melt functio
 	\caption{Company Profit Graph}
 
 \end{figure}
-\begin{lstlisting}[caption={Calculating The Fund Value},captionpos=b]
+\begin{lstlisting}[caption={Calculating The Fund Value},captionpos=b,label={list:L16}]
 # Now, claulating the Fund value:
 # F(t)= Premium (t)+ accumlatedMonthlyinterest(t)- benefit(t)
 for (i in 1:(tTimes-1)) {
@@ -489,11 +488,11 @@ accBenPay[i+1] <- accBenPay[i] +  benefitPay[i+1]
 fundValueTable<-data.frame(year,fundValues, interestMonthBased, benefitPay, accInterMonthBased, accBenPay)
 \end{lstlisting}
 \pagebreak
-The code in listing 16 calculates the fund value introduced in equation 3. Lines 3-12 loop through the number of survived years and calculate the fund value according to equation 3.  The monthly interest is calculated as well. The code stores the fund values and monthly interests in \textit{fundValues} and \textit{interestMonthBased} respectively. Line 14 creates a data frame called \textit{fundValuesTable} that contains the year, fund values, monthly interest, benefit payment, accumulated monthly interest and accumulated benefit payment.
+The code in listing \ref{list:L16} calculates the fund value introduced in equation 3. Lines 3-12 loop through the number of survived years and calculate the fund value according to equation 3.  The monthly interest is calculated as well. The code stores the fund values and monthly interests in \textit{fundValues} and \textit{interestMonthBased} respectively. Line 14 creates a data frame called \textit{fundValuesTable} that contains the year, fund values, monthly interest, benefit payment, accumulated monthly interest and accumulated benefit payment.
 \begin{equation}
 F(t)= Premium (t)+ accumlatedMonthlyinterest(t)- benefit(t)
 \end{equation}
-\begin{lstlisting}[caption={Calculating The Fund Value Based on Different Interests},captionpos=b]
+\begin{lstlisting}[caption={Calculating The Fund Value Based on Different Interests},captionpos=b,label={list:L17}]
 interestSeq <- seq(0.05, 0.055, 0.0005)
 yearSeq <- fundValueTable$year
 matrixFund <- matrix(, nrow = length(yearSeq), ncol = length(interestSeq)) # empty matrix
@@ -504,11 +503,11 @@ matrixFund[,column] <- CalculateFundValue(i)$fundValues
 column <- column + 1
 }
 \end{lstlisting}
-The code in listing 17 is similar to the code in listing 16 except that listing 17 calculates the fund value based on a variety of interest. The first loop calculates the fund value based in 0.05\% interest. The second loop calculates the fund value based in 0.055\% interest. The third loop calculates the fund value based in 0.0005\% interest. The code stores the results in a matrix for a 3D surface plotting. Below is a gif message that visualizes the outcome.
+The code in listing \ref{list:L17} is similar to the code in listing 16 except that listing 17 calculates the fund value based on a variety of interest. The first loop calculates the fund value based in 0.05\% interest. The second loop calculates the fund value based in 0.055\% interest. The third loop calculates the fund value based in 0.0005\% interest. The code stores the results in a matrix for a 3D surface plotting. Below is a gif message that visualizes the outcome.
 
 \animategraphics[controls,autoplay,loop,width=1\linewidth]{12}{Fund3DG/Fund3DG/ez-}{0}{309}
 
-\begin{lstlisting}[caption={Calculating The Reserve Value },captionpos=b]
+\begin{lstlisting}[caption={Calculating The Reserve Value },captionpos=b,label={list:L18}]
 nrowbDataFrame <- nrow(bDataFrame)
 reserveTable <- data.frame(matrix(ncol = 3, nrow = nYears))
 colnames(reserveTable) <- c("SurviveYears", "Reserve", "NumberPolicies")
@@ -529,16 +528,16 @@ reserveTable$NumberPolicies[reserveYear] <- counter
 reserveTable$Reserve[reserveYear] <- reserveAmount
 }
 \end{lstlisting}
-Listing 18 computes the reserve value based on equation 4.
+Listing \ref{list:L18} computes the reserve value based on equation 4.
 \begin{equation}
 _{s}V=A_{x+s}
      = EPV [Benefit]
-     =\sum_{k=1}^{\infty}V^{k+1} * _{k1}q_{x+3}
+     =\sum_{k=1}^{\infty}V^{k+1} * _{k1}q_{x+s}
 \end{equation}
 \begin{equation}
 Profit= Premium + Yearly Interests - Benefit Payment
 \end{equation}
-\begin{lstlisting}[caption={Calculating The Annual Profit and The Reserve Value },captionpos=b]
+\begin{lstlisting}[caption={Calculating The Annual Profit and The Reserve Value },captionpos=b,label={list:L19}]
 #find payment of the year 0
 payment <- paymentTable[paymentTable$SurviveYears == 0, c("Benefit")] 
 if(length(payment) == 0){ #sometime there is no payment for specific year, so convert numeric(0) to 0
@@ -587,7 +586,7 @@ profitTable$profit <- profitTable$money + profitTable$earnInterest - profitTable
 
 \animategraphics[controls,autoplay,loop,width=1\linewidth]{12}{Fund3DG/Fund3DG/ezo-}{0}{296}
 
-Listing 19 calculates the yearly profit along with the annual reserve based on equation 4 and equation5. The gif image above visualizes the outcome. Figure 8 shows profit graphs of the project. Since we generate the benefit randomly, the profit graph will have different shape each time we run the code.
+Listing \ref{list:L19} calculates the yearly profit along with the annual reserve based on equation 4 and equation5. The gif image above visualizes the outcome. Figure 8 shows profit graphs of the project. Since we generate the benefit randomly, the profit graph will have different shape each time we run the code.
 \newpage
 \begin{figure}[h]
 	\begin{tabular}{cc}
@@ -603,7 +602,6 @@ Listing 19 calculates the yearly profit along with the annual reserve based on e
 \newpage
 \section{Experimenting}
 We increased the policies to 100000 and ran the R code (without using C) on a Windows 10 x64-bit operating system with 3.20 GHz processor. It took 4.4 minutes to simulate 100000 policies. Moreover, we simulated the process for 1000000 policies and it took 44 minutes. The reason why we did not use C code for this simulation is that the C randomizer is not working well and the R randomizer is more efficient than the C randomizer.
-
 
 
 \end{document}
