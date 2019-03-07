@@ -1,7 +1,7 @@
 
 startTime <- Sys.time()
 #setwd("/media/hermann/Tonpi/tonpi/Collegecourses/CWU/Graduate School/Winter 2019/CS 567/Projects/Project1/3R")
-setwd("D:/tonpi/Collegecourses/CWU/Graduate-School/Winter 2019/CS 567/Projects/final/CS567_Project1")
+#setwd("D:/tonpi/Collegecourses/CWU/Graduate-School/Winter 2019/CS 567/Projects/final/CS567_Project1")
 inputs <- read.table("life_table_inputs.txt", header = TRUE, sep = "\t", dec = ".", stringsAsFactors=FALSE) #read the inputs values from the life_table_inputs.txt file
 #inputMortalityFile <- inputs$value[1]
 inputMortalityFile <- (inputs[inputs$label == "inputMortalityFile", c("value")])
