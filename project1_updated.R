@@ -77,22 +77,6 @@ CalculateFinalAge <- function(inputAge) {
   }
   #----------------------------------
   
-  
-  #print(sum(pCurveX$tl1_q_x))
-  
-  #plot lives probability based on input age
-  #myGraph <- ggplot(pCurveX, aes(pLivesAges, pLives))
-  #myGraph + geom_point()
-  #ggsave(filename = "images/lives probability based on input age.png", plot = myGraph)
-  
-  #x11()
-  #plot tl1_q_x based on input age
-  #myGraph <- ggplot(pCurveX, aes(pLivesAges, tl1_q_x))
-  #myGraph <- myGraph + geom_point() + labs(title = "probability of (x) survive t years and die next year")
-  #print(myGraph)
-  #ggsave(filename = "images/probability of (X) survive t years and die next year.png", plot = myGraph)
-  #----------------------------------------------
-  
   #generate random dies based on input age
   finalAge <- 0
   if(pCurveXRow > 1) { #bug -fixed,  avoid enter when nrow(pCurveX) == 0, this occur when inputAge is the last value of the tablelife
@@ -133,9 +117,6 @@ CalculateFinalAgePerfectData <- function(inputAge) { #---only for testing
     pCurveX$tl1_q_x[j] <- pCurveX$pLives[j-1] - pCurveX$pLives[j]
     #pCurveX$tl1_q_x[j] <- pCurveX$pLives[j] - pCurveX$pLives[j+1] #i = u in the pdf   1 = t in pdf
   }
-  #pCurveX$tl1_q_x[pCurveXRow] <- pCurveX$pLives[pCurveXRow] # last line
-  
-  #bFAge <- sample(pCurveX$pLivesAges, inputNumberClients, replace = T, pCurveX$tl1_q_x)
   
   #------generate perfect pCurve data
   perfectData <- vector(mode="numeric", length=inputNumberClients) # it is better to initialize variable to make it faster
@@ -160,52 +141,14 @@ CalculateFinalAgePerfectData <- function(inputAge) { #---only for testing
     fIndex <- bIndex + nRepeat - 1
     perfectData[bIndex:fIndex] <- pCurveX$pLivesAges[k]
     bIndex <- bIndex + nRepeat
-  }  
-  #nData <- length(perfectData)
+  }
   nFill <- inputNumberClients - fIndex
-  
   #fill residual round values from nData to numberclient 
   perfectData[(fIndex+1):inputNumberClients] <- sample(pCurveX$pLivesAges, nFill, replace = T, pCurveX$tl1_q_x)
-  #perfectData[(nData+1):inputNumberClients] <- perfectData[nData]
-  
   #return a vector
   return(perfectData)
 }
 
-
-CalculateFinalAgeSemiPerfectData <- function(inputAge) { #---only for testing
-  
-  #calculate probability of (x) lives t years  t_p_x where x = inputAges
-  previousAgeP <- lifeTable[ages == (inputAge - 1), c("t_p_x0")]
-  if (inputAge > 0) {
-    pLives <- lifeTable[ages >= inputAge, c("t_p_x0")]/previousAgeP
-  } else {
-    pLives <- lifeTable[ages >= inputAge, c("t_p_x0")]
-  }
-  
-  pLivesAges <- lifeTable[ages >= inputAge, c("ages")]
-  pCurveX <- data.frame(pLivesAges, pLives)
-  
-  #calculate probability tl1_q_x that x survives t years and dies within 1 year
-  pCurveXRow <- nrow(pCurveX)
-  
-  #probability of dead based on input age
-  pCurveX$tl1_q_x[1] <- 1 - pCurveX$pLives[1] # firt data important,,, to avoid bug
-  for (j in 2:(pCurveXRow)) {
-    
-    #small bug which does not consider the 0|1_q_x data..... also add q_x of 1 in the last year automatically? 
-    pCurveX$tl1_q_x[j] <- pCurveX$pLives[j-1] - pCurveX$pLives[j]
-    #pCurveX$tl1_q_x[j] <- pCurveX$pLives[j] - pCurveX$pLives[j+1] #i = u in the pdf   1 = t in pdf
-  }
-  #pCurveX$tl1_q_x[pCurveXRow] <- pCurveX$pLives[pCurveXRow] # last line
-  
-  
-  #note: return a vector
-  bFAge <- sample(pCurveX$pLivesAges, inputNumberClients, replace = T, pCurveX$tl1_q_x)
-  
-  
-  return(bFAge)
-}
 
 
 
@@ -234,15 +177,8 @@ lifeTableAges <- data.frame(Age=ages) # creating a data frame that contains the 
 
 print("---------Calculating Lifetimes-----------")
 print(paste("Number of clients: ", inputNumberClients))
-
-#pNormal <- dnorm(lifeTableAges$Age,35,10) # create a normal distribution mean = 35 years standard deviation = 10
-
-
-
-
 for (i in 1:inputNumberClients){ # 10,000 (whole life) incurances with Net Single Premium
-  
-  #randomAge <-  sample(lifeTableAges$Age, 1, replace = T, prob = pNormal) # there was a bug before lifeTableAges instead of lifeTableAges$Age
+
   randomAge <-  sample(lifeTableAges$Age, 1, replace = T) # there was a bug before lifeTableAges instead of lifeTableAges$Age
   randomBenefit <- sample.int(9000, 1, replace=TRUE) + 1000 # picking one randonm integer from range $1000-$1000000 benefit
   bAge[i] <- randomAge # concatenate
@@ -276,7 +212,6 @@ for (i in 1:inputNumberClients){ # 10,000 (whole life) incurances with Net Singl
       
       #small bug which does not consider the 0|1_q_x data..... also add q_x of 1 in the last year automatically? 
       pCurveX$tl1_q_x[j] <- pCurveX$pLives[j-1] - pCurveX$pLives[j]
-      #pCurveX$tl1_q_x[j] <- pCurveX$pLives[j] - pCurveX$pLives[j+1] #i = u in the pdf   1 = t in pdf
     }
   }
   #----------------------------------
@@ -291,32 +226,13 @@ for (i in 1:inputNumberClients){ # 10,000 (whole life) incurances with Net Singl
   }
   
   bFAge[i] <- finalAge
-  
-  
-  
-  
-  #-----this simulation part is for testing, do not delete-----------
-  #myGraph <- ggplot(pCurveX, aes(pLivesAges, tl1_q_x))
-  #print(myGraph + geom_point() + geom_point(aes(x=randomFinalAge, y=0.02), color="red"))
-  #Sys.sleep(2)
+
 }
-
-
-
-# #---only for testing
-# randomAge <- 0
-# bAge <- rep(randomAge, inputNumberClients) # concatenate
-# bBen <- rep(100, inputNumberClients) # concatenate
-# for (k in 1:inputNumberClients){
-#   bNps[k] <- BussinessBlock(bAge[k], bBen[k])
-# }
-# bFAge <- CalculateFinalAgePerfectData(randomAge)
 
 
 bDataFrame <- data.frame(Age = bAge, Benefit = bBen, NetSinglePremium = bNps, Die = bFAge) #Creating the final dataframe
 bDataFrame$SurviveYears <- bDataFrame$Die - bDataFrame$Age
 
-#write.csv(bDataFrame, file="BusinessData.csv",  append = FALSE) # creating the CSV file, each time we run the code new file will be created and the older file will be replaced 
 write.table(bDataFrame, file="BusinessData.csv", row.names=F, col.names=T, append=F, sep=",")
 
 #-----------------------------------------------------------
@@ -408,7 +324,6 @@ for (i in 1:nYears) {
   
 } 
 
-#benefitPayment[i+1] <- 0 #last year payment = 0
 profitTable <- data.frame(surviveYears, money, earnInterest, benefitPayment, reserveHold)
 #calculate  profit
 profitTable$profit <- profitTable$money + profitTable$earnInterest - profitTable$benefitPayment - profitTable$reserveHold
@@ -462,18 +377,6 @@ myGraph <- myGraph +theme(plot.title = element_text(hjust = 0.5))
 print(myGraph)
 
 ggsave(filename = "images/Company Profit Graph.png", plot = myGraph)
-#myGraph  <- ggplot() + geom_point(data=profitTable, aes(x=year, y=money), color = "black") +
-#  geom_point(data=profitTable, aes(x=year, y=benefitPayment), color = "red") +
-#  geom_point(data=profitTable, aes(x=year, y=earnInterest), color = "blue") +
-#  labs(title="Profit Graph")
-#print(myGraph)
-
-
-#print(sum(profitTable$benefitPayment))
-#print(sum(bDataFrame$Benefit))
-#print(sum(paymentTable$Benefit))
-#---------------------------------
-
 
 #----------------------------------
 

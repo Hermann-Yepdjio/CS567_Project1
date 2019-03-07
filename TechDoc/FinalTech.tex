@@ -175,7 +175,7 @@ v^t=(1+i)^{-t}
 \begin{equation}
 %\textsubscript{t}p\textsubscript{t}
  %_tp_x=p_x*_t_-_1p_x_=_0 
- _{t}p_{x}=lx_{n}/lx_{n-1}
+ _{t}P_{x=0}=_{1}P_{t-1} * _{t-1}P_{x=0}
 \end{equation}
 
 \StartLineAtOne
@@ -506,7 +506,7 @@ column <- column + 1
 \end{lstlisting}
 The code in listing 17 is similar to the code in listing 16 except that listing 17 calculates the fund value based on a variety of interest. The first loop calculates the fund value based in 0.05\% interest. The second loop calculates the fund value based in 0.055\% interest. The third loop calculates the fund value based in 0.0005\% interest. The code stores the results in a matrix for a 3D surface plotting. Below is a gif message that visualizes the outcome.
 
-\animategraphics[controls,autoplay,loop,width=1\linewidth]{12}{Fund3DG/ez-}{0}{309}
+\animategraphics[controls,autoplay,loop,width=1\linewidth]{12}{Fund3DG/Fund3DG/ez-}{0}{309}
 
 \begin{lstlisting}[caption={Calculating The Reserve Value },captionpos=b]
 nrowbDataFrame <- nrow(bDataFrame)
@@ -585,9 +585,10 @@ profitTable$profit <- profitTable$money + profitTable$earnInterest - profitTable
 \end{lstlisting}
 
 
-\animategraphics[controls,autoplay,loop,width=1\linewidth]{12}{Fund3DG/ezo-}{0}{296}
+\animategraphics[controls,autoplay,loop,width=1\linewidth]{12}{Fund3DG/Fund3DG/ezo-}{0}{296}
 
 Listing 19 calculates the yearly profit along with the annual reserve based on equation 4 and equation5. The gif image above visualizes the outcome. Figure 8 shows profit graphs of the project. Since we generate the benefit randomly, the profit graph will have different shape each time we run the code.
+\newpage
 \begin{figure}[h]
 	\begin{tabular}{cc}
 		\includegraphics[width=65mm]{report_profit.PNG} &   \includegraphics[width=65mm]{profit1.PNG} \\
@@ -598,6 +599,12 @@ Listing 19 calculates the yearly profit along with the annual reserve based on e
 	\end{tabular}
 	\caption{Profit Graphs}
 \end{figure}
+
+\newpage
+\section{Experimenting}
+We increased the policies to 100000 and ran the R code (without using C) on a Windows 10 x64-bit operating system with 3.20 GHz processor. It took 4.4 minutes to simulate 100000 policies. Moreover, we simulated the process for 1000000 policies and it took 44 minutes. The reason why we did not use C code for this simulation is that the C randomizer is not working well and the R randomizer is more efficient than the C randomizer.
+
+
 
 \end{document}
 
